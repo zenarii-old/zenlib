@@ -14,6 +14,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
 //NOTE(Abi): Defines
 #define global static
@@ -59,5 +60,6 @@ typedef bool64    b64;
 
 // NOTE(Abi): Zencore headers
 #include "zencore_platform.h"
+#include "zencore_debug.c"
 
 #endif //ZENCORE_H

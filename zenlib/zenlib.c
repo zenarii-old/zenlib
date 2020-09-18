@@ -1,20 +1,17 @@
-// TODO(Abi): Make these the weird dll 
-//https://stackoverflow.com/questions/14884126/build-so-file-from-c-file-using-gcc-command-line
-//test with a simple print function
-internal void ZenFirstLoad() {
+
+ZENAPPFUNC ZEN_APPLICATION_STATIC_LOAD(StaticLoad) {
+    Platform = Platform_;
+#ifdef ZENMODULE
+    ZenModuleInit();
+#endif
     
+    AppInit();
 }
 
-internal void ZenUpdate() {
-#ifdef ZENMODULE
-    ZenModuleBeginFrame();
-#endif
+ZENAPPFUNC ZEN_APPLICATION_UPDATE(Update) {
     
     AppUpdate();
     
-#ifdef ZENMODULE
-    ZenModuleEndFrame();
-#endif
 }
 
 #ifdef ZENMODULE

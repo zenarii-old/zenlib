@@ -3,6 +3,12 @@
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>
 #undef Success
+
+
+#ifndef INTERNAL_BUILD
+#error ur gay lol
+#endif
+
 // NOTE(Abi): OpenGL
 
 // NOTE(Abi): CRT
@@ -10,6 +16,7 @@
 // NOTE(Abi): Zenlib Headers
 #include "zencore.h"
 #include "zencore_linux_time.h"
+#include "zencore_linux_misc.h"
 
 // NOTE(Abi): Globals
 global Display * XDisplay;
@@ -21,8 +28,8 @@ global platform GlobalPlatform;
 
 // NOTE(Abi): Zenlib Implementations
 #include "zencore_linux_time.c"
+#include "zencore_linux_misc.c"
 #include "zencore_linux_app_code.c"
-
 
 // TEMP(Abi): OpenGL-y
 
@@ -132,6 +139,11 @@ LinuxProcessEvent(XEvent Event) {
     }
 }
 
+// TODO(Abi): 
+// DLL loading,
+// Memory Arena for big fixed size arenas
+// Basic opengl drawing triangle 
+
 #define TEMP_WINDOW_DIMENSIONS 800, 600
 #define TEMP_WINDOW_NAME "zenlib"
 int main(int argc, char ** argv) {
@@ -139,15 +151,25 @@ int main(int argc, char ** argv) {
     
     b32 LoadTimerSuccess = LinuxTimerInit();
     if(!LoadTimerSuccess) {
-        //TODO(Zen): Debug-out
-        fprintf(stderr, "Failed to initialise timer");
+        LinuxError("Fatal error", "Failed to load timer.");
+        goto ZenLinuxEnd;
     }
+    
+    
+    linux_app_code LinuxAppCode = {0};
+    b32 LoadAppCodeSuccess = LinuxAppCodeLoad(&LinuxAppCode);
+    if(!LoadAppCodeSuccess) {
+        LinuxError("Fatal error", "Failled to load app code.");
+        goto ZenLinuxEnd;
+    }
+    
     
     TEMPRendererInit();
     //LinuxRendererInit();
     
     //NOTE(Abi): Create Window
     {
+        
         XWindow = XCreateWindow(XDisplay, DefaultRootWindow(XDisplay), 
                                 0, 0, TEMP_WINDOW_DIMENSIONS, 
                                 0, _Visual->depth, InputOutput, _Visual->visual, CWColormap | CWEventMask,
@@ -169,7 +191,12 @@ int main(int argc, char ** argv) {
         
         WindowCloseID = XInternAtom(XDisplay, "WM_DELETE_WINDOW", 0);
         XSetWMProtocols(XDisplay, XWindow, &WindowCloseID, 1);
-    } // TODO(Abi): I guess check if this fails lol
+        
+        if(!XWindow) {
+            LinuxError("Fatal Error", "Failed to create window");
+            goto ZenLinuxEnd;
+        }
+    }
     
     // NOTE(Abi): Initialise platform
     {
@@ -177,7 +204,7 @@ int main(int argc, char ** argv) {
         Platform = &GlobalPlatform;
     }
     
-    //LinuxAppCode.FirstLoad();
+    (*LinuxAppCode.StaticLoad)(&GlobalPlatform);
     //LinuxAppCode.HotLoad();
     
     // TODO(Abi): Platform struct
@@ -199,13 +226,12 @@ int main(int argc, char ** argv) {
             }
         }
         
-        // TODO(Abi): Watch the handmade hero episode, call AppCode->Update();
-        //LinuxAppCode.Update();
-        
-        //TODO(Zen): Timing
+        LinuxAppCode.Update();
         
         LinuxTimerEndFrame();
     }
+    
+    ZenLinuxEnd:;
     
     return 0;
 }

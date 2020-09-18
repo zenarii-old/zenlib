@@ -5,7 +5,7 @@ LinuxTimerInit(void) {
     
     if(clock_gettime(CLOCK_MONOTONIC_RAW, &StartTS) == 0) {
         Success = 1;
-        LinuxTimer.StartTime = StartTS.tv_sec * ONE_BILLION + StartTS.tv_nsec;
+        LinuxTimer.StartTime = StartTS.tv_sec * 1000000000 + StartTS.tv_nsec;
     }
     
     return Success;

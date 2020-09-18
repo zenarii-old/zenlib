@@ -30,4 +30,18 @@ ZenPlatformEndFrame(void) {
     
 }
 
+#ifdef _MSC_VER
+#define ZENAPPFUNC __declspec(dllexport)
+#else
+#define ZENAPPFUNC
+#endif
+
+#define ZEN_APPLICATION_STATIC_LOAD(name) void name(platform * Platform_)
+typedef ZEN_APPLICATION_STATIC_LOAD(ZenApplicationStaticLoadCallback);
+ZEN_APPLICATION_STATIC_LOAD(ZenApplicationStaticLoadStub) { }
+
+#define ZEN_APPLICATION_UPDATE(name) void name(void)
+typedef ZEN_APPLICATION_UPDATE(ZenApplicationUpdateCallback);
+ZEN_APPLICATION_UPDATE(ZenApplicationUpdateStub) { }
+
 #endif //ZENCORE_PLATFORM_H

@@ -6,9 +6,8 @@
 #ifdef ZENMODULE
 #include MODULEPATHHEADER
 #endif
-//NOTE(Abi): etc.
 
-internal void GameInit(void);
-internal void GameUpdate(void);
+internal void AppInit(void);
+internal void AppUpdate(void);
 
 #endif //ZENLIB_H

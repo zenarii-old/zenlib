@@ -4,9 +4,6 @@
 
 #include <time.h>
 
-#define ONE_BILLION   1000000000
-#define ONE_BILLION_F 1000000000.f
-
 typedef struct linux_timer_info linux_timer_info;
 struct linux_timer_info {
     u64 StartTime;
