@@ -2,15 +2,29 @@
 #define ZENCORE_H
 
 #define ZENCORE 1
+
+// TEMP(Abi) Move to debug
+#define ZSoftAssert(...)
+// TEMP(Abi) Move to memory
+#define MemoryCopy memcpy
+#define MemorySet memset
+
 // NOTE(Abi): C Standard Library
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 //NOTE(Abi): Defines
 #define global static
 #define internal static
 #define local static
+
+#define Kilobytes(n) (n * 1024)
+#define Megabytes(n) (Kilobytes(n) * 1024)
+#define Gigabytes(n) (Megabytes(n) * 1024)
+
+#define unused(x) (void)(x)
 
 //NOTE(Abi): Typedefs
 typedef int8_t    int8;
@@ -42,5 +56,8 @@ typedef bool8     b8;
 typedef bool16    b16;
 typedef bool32    b32;
 typedef bool64    b64;
+
+// NOTE(Abi): Zencore headers
+#include "zencore_platform.h"
 
 #endif //ZENCORE_H
