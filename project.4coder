@@ -38,7 +38,7 @@ command_list = {
 	
 	{
 		.name = "run",
-		.out = "*compilation*",
+		.out = "*compilation_*",
 		.footer_panel = true,
 		.save_dirty_files = true,
 		.cursor_at_end = false,

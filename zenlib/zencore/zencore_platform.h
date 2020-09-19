@@ -15,11 +15,18 @@ struct platform {
     f64 TargetFPS;
     b8 KeyDown[ZKEY_COUNT];
     b8 KeyWasDown[ZKEY_COUNT];
+    
+    memory_arena PermenantArena;
+    memory_arena ScratchArena;
+    
+    // NOTE(Abi): Function pointers
+#ifdef USE_OPENGL
+    void * (*OpenGLLoadProcedure)(const char * Name);
+#endif
 };
 
 global platform * Platform;
 
-// TODO(Zen): Consider putting in zencore_platform.c? Could then use GlobalPlatform
 internal void
 ZenPlatformBeginFrame(void) {
     MemoryCopy(Platform->KeyWasDown, Platform->KeyDown, sizeof(b8) * ZKEY_COUNT);
@@ -43,5 +50,13 @@ ZEN_APPLICATION_STATIC_LOAD(ZenApplicationStaticLoadStub) { }
 #define ZEN_APPLICATION_UPDATE(name) void name(void)
 typedef ZEN_APPLICATION_UPDATE(ZenApplicationUpdateCallback);
 ZEN_APPLICATION_UPDATE(ZenApplicationUpdateStub) { }
+
+#define ZEN_APPLICATION_HOT_LOAD(name) void name(platform * Platform_)
+typedef ZEN_APPLICATION_HOT_LOAD(ZenApplicationHotLoadCallback);
+ZEN_APPLICATION_HOT_LOAD(ZenApplicationHotLoadStub) { }
+
+#define ZEN_APPLICATION_HOT_UNLOAD(name) void name(void)
+typedef ZEN_APPLICATION_HOT_UNLOAD(ZenApplicationHotUnloadCallback);
+ZEN_APPLICATION_HOT_UNLOAD(ZenApplicationHotUnloadStub) { }
 
 #endif //ZENCORE_PLATFORM_H

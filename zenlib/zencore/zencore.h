@@ -25,6 +25,9 @@
 #define Megabytes(n) (Kilobytes(n) * 1024)
 #define Gigabytes(n) (Megabytes(n) * 1024)
 
+#define _Stringify(x) #x
+#define Stringify(x) _Stringify(x)
+
 #define unused(x) (void)(x)
 
 //NOTE(Abi): Typedefs
@@ -59,7 +62,12 @@ typedef bool32    b32;
 typedef bool64    b64;
 
 // NOTE(Abi): Zencore headers
-#include "zencore_platform.h"
+#include "zencore_debug.h"
+
 #include "zencore_debug.c"
+#include "zencore_memory.c"
+#include "zencore_platform.h"
+
+#include "program_options.inc"
 
 #endif //ZENCORE_H

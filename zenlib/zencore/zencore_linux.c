@@ -2,12 +2,9 @@
 #include <unistd.h>
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #undef Success
-
-
-#ifndef INTERNAL_BUILD
-#error ur gay lol
-#endif
 
 // NOTE(Abi): OpenGL
 
@@ -22,33 +19,18 @@
 global Display * XDisplay;
 global Window XWindow;
 global XSetWindowAttributes _SetWindowAttributes;
-global Colormap _Colourmap;
 global Atom WindowCloseID;
 global platform GlobalPlatform;
 
 // NOTE(Abi): Zenlib Implementations
 #include "zencore_linux_time.c"
 #include "zencore_linux_misc.c"
+#include "zencore_linux_fileio.c"
 #include "zencore_linux_app_code.c"
 
-// TEMP(Abi): OpenGL-y
-
-#include <GL/gl.h>
-#include <GL/glx.h>
-#include <GL/glu.h>
-global XVisualInfo * _Visual;
-
-// IDEA(Abi): Return a linux based struct Visual->depth, Visual->visual, for use in XCreateWindow
-internal void
-TEMPRendererInit() {
-    i32 WindowAttributes[] = {GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None};
-    _Visual = glXChooseVisual(XDisplay, 0, WindowAttributes);
-    _Colourmap = XCreateColormap(XDisplay, DefaultRootWindow(XDisplay), _Visual->visual, AllocNone);
-    
-    _SetWindowAttributes.colormap = _Colourmap;
-    //TODO(Zen): Check if need more, since in ZCreateWindow using more in the XSelectInput
-    _SetWindowAttributes.event_mask = ExposureMask | KeyPressMask;
-}
+#ifdef USE_OPENGL
+#include "zencore_linux_opengl.c"
+#endif
 
 //~
 
@@ -58,13 +40,14 @@ LinuxProcessEvent(XEvent Event) {
     switch(Event.type) {
         /* TODO
         case ConfigureNotify: {
-            ZRendererResize(Event.xconfigurerequest.width, Event.xconfigurerequest.height);
+            // NOTE(Abi): This is a resize event
         } break;
 */
         case Expose: {
             XWindowAttributes attribs;
             XGetWindowAttributes(XDisplay, XWindow, &attribs);
             //TODO ZRendererResize(attribs.width, attribs.height);
+            // NOTE(Abi): This is a resize event
         } break;
         
         case KeyPress:
@@ -140,12 +123,11 @@ LinuxProcessEvent(XEvent Event) {
 }
 
 // TODO(Abi): 
-// DLL loading,
-// Memory Arena for big fixed size arenas
-// Basic opengl drawing triangle 
+// DLL loading [~]
+// Memory Arena for big fixed size arenas,
+// Zen2d
+// Mouse stuff
 
-#define TEMP_WINDOW_DIMENSIONS 800, 600
-#define TEMP_WINDOW_NAME "zenlib"
 int main(int argc, char ** argv) {
     XDisplay = XOpenDisplay(0);
     
@@ -164,19 +146,17 @@ int main(int argc, char ** argv) {
     }
     
     
-    TEMPRendererInit();
-    //LinuxRendererInit();
-    
     //NOTE(Abi): Create Window
     {
+        LinuxRendererInit();
         
         XWindow = XCreateWindow(XDisplay, DefaultRootWindow(XDisplay), 
-                                0, 0, TEMP_WINDOW_DIMENSIONS, 
+                                0, 0, WINDOW_SIZE, 
                                 0, _Visual->depth, InputOutput, _Visual->visual, CWColormap | CWEventMask,
                                 &_SetWindowAttributes);
-        //LinuxRendererFinalise();
+        LinuxRendererFinalise();
         
-        XStoreName(XDisplay, XWindow, TEMP_WINDOW_NAME);
+        XStoreName(XDisplay, XWindow, WINDOW_TITLE);
         
         XSelectInput(XDisplay, XWindow,
                      SubstructureNotifyMask
@@ -201,17 +181,29 @@ int main(int argc, char ** argv) {
     // NOTE(Abi): Initialise platform
     {
         GlobalPlatform.TargetFPS = 60.f;
+        
+        void * PermenantStorage = malloc(PERMENANT_STORAGE_SIZE);
+        GlobalPlatform.PermenantArena = MemoryArenaInit(PermenantStorage, PERMENANT_STORAGE_SIZE);
+        
+        void * ScratchStorage = malloc(SCRATCH_STORAGE_SIZE);
+        GlobalPlatform.ScratchArena = MemoryArenaInit(ScratchStorage, SCRATCH_STORAGE_SIZE);
+        
+        // NOTE(Abi): Set function pointers
+#ifdef USE_OPENGL
+        GlobalPlatform.OpenGLLoadProcedure = LinuxOpenGLLoadProcedure;
+#endif
+        
         Platform = &GlobalPlatform;
     }
     
-    (*LinuxAppCode.StaticLoad)(&GlobalPlatform);
-    //LinuxAppCode.HotLoad();
+    LinuxAppCode.StaticLoad(&GlobalPlatform);
+    LinuxAppCode.HotLoad(&GlobalPlatform);
     
-    // TODO(Abi): Platform struct
     b8 AppShouldQuit = 0;
     while (!AppShouldQuit) {
         ZenPlatformBeginFrame();
         LinuxTimerBeginFrame();
+        LinuxAppCodeBeginFrame(&LinuxAppCode);
         
         // NOTE(Abi): Process Input
         while (XPending(XDisplay) > 0) {
@@ -226,8 +218,10 @@ int main(int argc, char ** argv) {
             }
         }
         
+        MemoryArenaClear(&GlobalPlatform.ScratchArena);
         LinuxAppCode.Update();
         
+        LinuxSwapBuffers();
         LinuxTimerEndFrame();
     }
     

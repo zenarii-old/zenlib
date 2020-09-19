@@ -1,6 +1,7 @@
 #ifndef ZENCORE_LINUX_DEBUG_H
 #define ZENCORE_LINUX_DEBUG_H
 
+// TODO(Abi): define these
 #define HardAssert(expr) 
 #define SoftAssert(expr) 
 

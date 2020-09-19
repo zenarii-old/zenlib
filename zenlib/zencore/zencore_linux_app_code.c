@@ -3,7 +3,11 @@
 typedef struct linux_app_code linux_app_code;
 struct linux_app_code {
     ZenApplicationStaticLoadCallback * StaticLoad;
-    ZenApplicationUpdateCallback * Update;
+    ZenApplicationUpdateCallback     * Update;
+    ZenApplicationHotLoadCallback    * HotLoad;
+    ZenApplicationHotUnloadCallback  * HotUnload;
+    void * Handle;
+    time_t LastWriteTime;
 };
 
 #define T(x) fprintf(stderr, "%s\n", x);
@@ -14,12 +18,11 @@ LinuxAppCodeLoad(linux_app_code * AppCode) {
     char * Error = 0;
     
     void * Handle;
-    // TODO(Abi): maybe use RTLB_LAZY?
     // TODO(Abi): Sort out the string, should be absolute not relative
-    Handle = dlopen("./sandbox.so", RTLD_LAZY);
+    Handle = dlopen("./sandbox.so", RTLD_NOW);
     
     if((Error = dlerror())) {
-        LinuxError("Shared Library Error", Error);
+        LinuxError("Shared Library (" Stringify(__LINE__) ")", Error);
     }
     
     if(!Handle) {
@@ -28,26 +31,53 @@ LinuxAppCodeLoad(linux_app_code * AppCode) {
     }
     
     if((Error = dlerror())) {
-        LinuxError("Shared Library Error", Error);
+        LinuxError("Shared Library (" Stringify(__LINE__) ")", Error);
     }
     
     *(void**)(&AppCode->StaticLoad) = dlsym(Handle, "StaticLoad");
     *(void**)(&AppCode->Update)     = dlsym(Handle, "Update");
+    *(void**)(&AppCode->HotLoad)    = dlsym(Handle, "HotLoad");
+    *(void**)(&AppCode->HotUnload)  = dlsym(Handle, "HotUnload");
     
     if((Error = dlerror())) {
-        LinuxError("Shared Library Error", Error);
+        LinuxError("Shared Library (" Stringify(__LINE__) ")", Error);
     }
     
-    // NOTE(Abi): For future: once u call dlclose you will segfault, 
-    //            But will need to keep this here for the dynamic unload
-    //dlclose(Handle);
+    Success = AppCode->StaticLoad && AppCode->Update && AppCode->HotLoad && AppCode->HotUnload;
     
-    Success = AppCode->StaticLoad && AppCode->Update;
-    
-    if(!Success) {
+    if(Success) {
+        AppCode->Handle = Handle;
+        struct stat FileAttributes = {0};
+        stat("./sandbox.so", &FileAttributes);
+        AppCode->LastWriteTime = FileAttributes.st_mtime;
+    }
+    else {
         AppCode->StaticLoad = ZenApplicationStaticLoadStub;
         AppCode->Update     = ZenApplicationUpdateStub;
+        AppCode->HotLoad    = ZenApplicationHotLoadStub;
+        AppCode->HotUnload  = ZenApplicationHotUnloadStub;
+        dlclose(Handle);
     }
     
     return Success;
+}
+
+internal void
+LinuxAppCodeBeginFrame(linux_app_code * AppCode) {
+    // TODO(Abi): Move this to app code
+    struct stat DLLAttributes = {0};
+    stat("./sandbox.so", &DLLAttributes);
+    
+    if(DLLAttributes.st_mtime != AppCode->LastWriteTime) {
+        AppCode->HotUnload();
+        
+        dlclose(AppCode->Handle);
+        *AppCode = (linux_app_code){0};
+        // TODO(Abi): need to wait until the compiler has finished compiling sandbox.so
+        LinuxTimerSleep(1000);
+        LinuxAppCodeLoad(AppCode);
+        
+        AppCode->HotLoad(&GlobalPlatform);
+        //TODO(Zen): going to need a visual change for this one. Crashed on prev attempt
+    }
 }

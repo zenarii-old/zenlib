@@ -6,10 +6,20 @@
 
 internal void
 AppUpdate() {
-    fprintf(stderr, "Update\n");
+    
 }
 
 internal void
 AppInit() {
-    fprintf(stderr, "Start\n");
+    fprintf(stderr, "Begin App\n");
+}
+
+internal void
+AppHotLoad() {
+    fprintf(stderr, "Hot loaded\n");
+}
+
+internal void
+AppHotUnload() {
+    fprintf(stderr, "Hot Unloaded\n");
 }
