@@ -1,3 +1,6 @@
+#define MemorySet memset
+#define MemoryCopy memcpy
+
 #ifndef DEFAULT_ALIGNMENT
 #define DEFAULT_ALIGNMENT (2 * sizeof(void*))
 #endif
@@ -31,15 +34,17 @@ MemoryArenaAlignForward(uintptr_t Pointer, size_t Alignment) {
     // NOTE(Abi): This is identical to p % a since a = 2^k
     Modulo = p & (a-1);
     if(Modulo != 0) {
-        // NOTE(Abi): p unaligned
+        // NOTE(Abi): Align pointer
         p += a - Modulo;
     }
     
     return p;
 }
 
+
 internal void *
 _MemoryArenaAllocAligned(memory_arena * Arena, size_t Size, size_t Alignment) {
+    HardAssert(Arena->Memory && "Memory points to a null pointer!");
     uintptr_t CurrentPointer = (uintptr_t)Arena->Memory + (uintptr_t)Arena->Offset;
     uintptr_t Offset = MemoryArenaAlignForward(CurrentPointer, Alignment);
     Offset -= (uintptr_t)Arena->Memory;
@@ -49,10 +54,12 @@ _MemoryArenaAllocAligned(memory_arena * Arena, size_t Size, size_t Alignment) {
     Arena->Offset = Offset + Size;
     Arena->MemoryLeft = (Arena->MemorySize) - (Arena->Offset);
     
-    void * Pointer = &Arena->Memory[Offset];
+    void * Pointer = Arena->Memory + Offset;
     memset(Pointer, 0, Size);
+    
     return Pointer;
 }
+
 
 internal void *
 MemoryArenaAlloc(memory_arena * Arena, size_t Size) {
@@ -64,4 +71,19 @@ internal void
 MemoryArenaClear(memory_arena * Arena) {
     Arena->Offset = 0;
     Arena->MemoryLeft = Arena->MemorySize;
+}
+
+// TODO(Abi): Test this
+internal char *
+MemoryArenaAllocStringf(memory_arena * Arena, char * Format, ...) {
+    va_list Args;
+    va_start(Args, Format);
+    
+    u32 Length = vprintf(Format, Args);
+    char * Result = MemoryArenaAlloc(Arena, (Length + 1) * sizeof(char));
+    vsprintf(Result, Format, Args);
+    
+    va_end(Args);
+    
+    return Result;
 }

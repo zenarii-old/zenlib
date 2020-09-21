@@ -21,6 +21,11 @@ LinuxRendererInit(void) {
 }
 
 internal void
+LinuxRendererResize(i32 Width, i32 Height) {
+    glViewport(0, 0, Width, Height);
+}
+
+internal void
 LinuxRendererFinalise(void) {
     glXMakeCurrent(XDisplay, XWindow, GLContext);
 }
@@ -36,7 +41,7 @@ LinuxOpenGLLoadProcedure(const char * Name) {
     
     // WARNING(Abi): This doesn't mean that the function is supported.
     if(!p) {
-        LinuxError("OpenGL Procedure Error", "Failed to load procedure: %s", Name);
+        LinuxError("OpenGL Procedure Error", "Failed to load procedure");
     }
     
     return p;

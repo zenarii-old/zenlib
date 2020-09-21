@@ -53,15 +53,7 @@ LinuxMessageBox(const char * Title, const char * Message) {
 
 
 internal void
-LinuxError(const char * Title, const char * Message, ...) {
-    va_list args;
-    va_start(args, Message);
-    fprintf(stderr, "%s: ", Title);
-    vfprintf(stderr, Message, args);
-    
-    local char Buffer[1024] = {0};
-    
-    vsprintf(Buffer, Message, args);
+LinuxError(const char * Title, const char * Message) {
+    fprintf(stderr, "%s: %s\n", Title, Message);
     LinuxMessageBox(Title, Message);
-    va_end(args);
 }

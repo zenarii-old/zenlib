@@ -1,8 +1,21 @@
 // TODO(Abi): Clean up file into header etc.
-void // TODO(Abi): Use variable args
-DebugLog(i32 Type, const char * File, i32 Line, const char * Message) {
-    // TEMP(Abi): 
-    fprintf(stderr, "(%s:%d) %s\n", File, Line, Message);
+internal void
+DebugLog(i32 Type, const char * File, i32 Line, const char * Message, ...) {
+    va_list Args;
+    va_start(Args, Message);
+    fprintf(stderr, "(%s:%d) ", File, Line);
+    vfprintf(stderr, Message, Args);
+    fprintf(stderr, "\n");
+    va_end(Args);
+    // TODO(Abi): Will need to use OutputStringA or smt on windows
 }
 
-#define Log(Message) DebugLog(0, __FILE__, __LINE__, Message);
+internal void
+FailedAssert(const char * File, i32 Line, const char * Expression, b32 Crash) {
+    
+    fprintf(stderr, "Assert Failed (%s:%d): %s\n", File, Line, Expression);
+    
+    if(Crash) {
+        *(int *)0 = 0;
+    }
+}

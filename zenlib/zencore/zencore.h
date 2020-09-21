@@ -30,6 +30,10 @@
 
 #define unused(x) (void)(x)
 
+#define IsPowerOfTwo(x) !((x) & (x-1))
+
+#define PI 3.1415926535897f
+
 //NOTE(Abi): Typedefs
 typedef int8_t    int8;
 typedef int16_t   int16;
@@ -61,12 +65,31 @@ typedef bool16    b16;
 typedef bool32    b32;
 typedef bool64    b64;
 
+typedef struct v2 v2;
+struct v2 { f32 x; f32 y; };
+#define v2(x, y) (v2){x, y}
+
+typedef struct v3 v3;
+struct v3 { f32 x; f32 y; f32 z; };
+#define v3(x, y, z) (v3){x, y, z}
+
+typedef struct v4 v4;
+struct v4 { 
+    f32 x; f32 y; 
+    union { 
+        struct { f32 z; f32 w; }; 
+        struct { f32 Width; f32 Height; }; 
+    };
+};
+#define v4(x, y, z, w) (v4){x, y, {{z, w}}}
+
 // NOTE(Abi): Zencore headers
 #include "zencore_debug.h"
 
 #include "zencore_debug.c"
 #include "zencore_memory.c"
 #include "zencore_platform.h"
+#include "zencore_maths.c"
 
 #include "program_options.inc"
 

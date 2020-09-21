@@ -10,13 +10,38 @@
 #define OPENGLPROC(function, type) global PFNGL##type##PROC gl##function;
 #include "zen2d_opengl_proc_list.inc"
 
-struct zen2d {
-    struct rect_data {
-        int x;
-    } RectData;
+// NOTE(Abi): Shaders
+typedef struct zen2d_shader_info zen2d_shader_info;
+struct zen2d_shader_info {
+    char * Name;
+    char * VertexSource;
+    char * FragmentSource;
 };
 
-// TODO(Abi): Maybe need to set the context???
+enum zen2d_shader_type {
+    ZEN2D_SHADER_RECTANGLES,
+    
+    ZEN2D_SHADER_COUNT
+};
+
+global u32 GlobalShaders[ZEN2D_SHADER_COUNT] = {0};
+
+struct zen2d {
+    ZEN2D_COMMON;
+    
+    u32 GeneralVAO;
+    
+#define ZEN2DBATCHTYPE(lower_name, upper_name, size, max) \
+struct zen2d_##lower_name##_data { \
+u32 VAO, VBO; \
+unsigned char * Memory; \
+u32 AllocPos; \
+u32 Stride; \
+} upper_name; 
+#include "zen2d_batch_data_types.inc"
+};
+
+// NOTE(Abi): OpenGL Specific Shaders
 internal void Zen2DLoadAllOpenGLFunctions(void);
 
 #endif //ZEN2D_OPENGL_H

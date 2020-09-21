@@ -64,7 +64,6 @@ LinuxAppCodeLoad(linux_app_code * AppCode) {
 
 internal void
 LinuxAppCodeBeginFrame(linux_app_code * AppCode) {
-    // TODO(Abi): Move this to app code
     struct stat DLLAttributes = {0};
     stat("./sandbox.so", &DLLAttributes);
     

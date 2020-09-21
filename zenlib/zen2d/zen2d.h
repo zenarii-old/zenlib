@@ -5,14 +5,45 @@
 typedef struct zen2d zen2d;
 typedef struct texture texture;
 
+#define ZEN2D_MAX_BATCHES 1024
+typedef enum zen2d_batch_type zen2d_batch_type;
+enum zen2d_batch_type {
+    ZEN2D_BATCH_NULL,
+    ZEN2D_BATCH_RECTS,
+    
+    ZEN2D_BATCH_COUNT
+};
+
+typedef struct zen2d_batch zen2d_batch;
+struct zen2d_batch {
+    zen2d_batch_type Type;
+    void * Data;
+    u32 DataLength;
+};
+
 global zen2d * Zen2D;
 
 #define ZEN2D_COMMON \
 struct { \
+zen2d_batch * ActiveBatch; \
+zen2d_batch * Batches; \
+u32 BatchesCount; \
 \
-}
+f32 RendererWidth; \
+f32 RendererHeight; \
+} 
+
+//TODO(Zen): Aim is to get a system where I can push rectangles and borders of different amounts and make sure that the visuals work
+
+internal void Zen2DPushRect(v4 Rect, v4 Colour);
+internal void Zen2DPushRectVertices(v4 Rect, v4, v4, v4, v4);
+internal void Zen2DPushRectBorder(v4 Rect, v4 Colour);
 
 internal void Zen2DInit(memory_arena * Arena);
+internal void Zen2DBeginFrame();
+internal void Zen2DEndFrame();
+
+
 
 #ifdef USE_OPENGL
 #include "zen2d_opengl.h"

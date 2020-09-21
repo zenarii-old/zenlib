@@ -46,8 +46,9 @@ LinuxProcessEvent(XEvent Event) {
         case Expose: {
             XWindowAttributes attribs;
             XGetWindowAttributes(XDisplay, XWindow, &attribs);
-            //TODO ZRendererResize(attribs.width, attribs.height);
-            // NOTE(Abi): This is a resize event
+            LinuxRendererResize(attribs.width, attribs.height);
+            GlobalPlatform.ScreenWidth  = attribs.width;
+            GlobalPlatform.ScreenHeight = attribs.height;
         } break;
         
         case KeyPress:
@@ -90,13 +91,11 @@ LinuxProcessEvent(XEvent Event) {
             }
             GlobalPlatform.KeyDown[KeyIndex] = KeyDown;
             //TODO if(KeyDown && PutChar) _ZPutCharacter(PutChar);
-            if(KeyDown && PutChar) fprintf(stderr, "%c", PutChar);
         } break;
-        /*TODO
-        //NOTE(Zen): Mouse Buttons
+        
+        // NOTE(Abi): Mouse Buttons
         case ButtonPress:
         case ButtonRelease: {
-            
             b32 ButtonDown = (Event.type == ButtonPress);
             
             int ButtonIndex = 0;
@@ -113,12 +112,12 @@ LinuxProcessEvent(XEvent Event) {
             }
             GlobalPlatform.MouseDown[ButtonIndex] = ButtonDown;
         } break;
-*/
-        /* TODO
+        
+        
         case MotionNotify: {
-            GlobalPlatform.MousePosition = v2(Event.xmotion.x, GlobalPlatform.ScreenHeight - Event.xmotion.y);
+            GlobalPlatform.MousePosition = v2(Event.xmotion.x, Event.xmotion.y);
         } break;
-*/
+        
     }
 }
 
@@ -182,13 +181,14 @@ int main(int argc, char ** argv) {
     {
         GlobalPlatform.TargetFPS = 60.f;
         
-        void * PermenantStorage = malloc(PERMENANT_STORAGE_SIZE);
+        void * PermenantStorage = calloc(PERMENANT_STORAGE_SIZE, 1);
         GlobalPlatform.PermenantArena = MemoryArenaInit(PermenantStorage, PERMENANT_STORAGE_SIZE);
         
-        void * ScratchStorage = malloc(SCRATCH_STORAGE_SIZE);
+        void * ScratchStorage = calloc(SCRATCH_STORAGE_SIZE, 1);
         GlobalPlatform.ScratchArena = MemoryArenaInit(ScratchStorage, SCRATCH_STORAGE_SIZE);
         
         // NOTE(Abi): Set function pointers
+        GlobalPlatform.Error = LinuxError;
 #ifdef USE_OPENGL
         GlobalPlatform.OpenGLLoadProcedure = LinuxOpenGLLoadProcedure;
 #endif
