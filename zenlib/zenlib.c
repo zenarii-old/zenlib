@@ -20,10 +20,9 @@ ZENAPPFUNC ZEN_APPLICATION_UPDATE(Update) {
 #endif
 }
 
+// TODO(Abi): Fix hotloading seg faults
 ZENAPPFUNC ZEN_APPLICATION_HOT_LOAD(HotLoad) {
     Platform = Platform_;
-    
-    // TODO(Abi): Lose all the pointers so need to get them back
     
     AppHotLoad();
 }

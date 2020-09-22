@@ -16,8 +16,6 @@ enum zen2d_batch_type {
     ZEN2D_BATCH_COUNT
 };
 
-
-
 typedef struct zen2d_batch zen2d_batch;
 struct zen2d_batch {
     zen2d_batch_type Type;

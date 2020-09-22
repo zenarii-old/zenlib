@@ -58,9 +58,6 @@ Zen2DOpenGLAddFloatAttribute(i32 ID, u32 Count, u32 Stride, u32 Offset) {
     glEnableVertexAttribArray(ID);
 }
 
-global zen2d_batch Batches[ZEN2D_MAX_BATCHES] = {0};
-global u32 BatchesCount = 0;
-
 internal void
 Zen2DInit(memory_arena * Arena) {
     Zen2DOpenGLLoadAllFunctions();
@@ -122,7 +119,7 @@ Zen2D->name.AllocPos = 0; \
 internal void
 Zen2DPushRectVertices(v4 Rect, v4 Colour00, v4 Colour01, v4 Colour10, v4 Colour11){
     if(!Zen2D->ActiveBatch || Zen2D->ActiveBatch->Type != ZEN2D_BATCH_RECTS) {
-        Zen2D->ActiveBatch = &Batches[BatchesCount++];
+        Zen2D->ActiveBatch = &Zen2D->Batches[Zen2D->BatchesCount++];
         Zen2D->ActiveBatch->Type = ZEN2D_BATCH_RECTS;
         Zen2D->ActiveBatch->Data = Zen2D->Rect.Memory + Zen2D->Rect.AllocPos;
         Zen2D->ActiveBatch->DataLength = 0;
@@ -175,7 +172,7 @@ Zen2DPushRect(v4 Rect, v4 Colour) {
 internal void
 Zen2DPushLineVertices(v2 Start, v2 End, v4 StartColour, v4 EndColour) {
     if(!Zen2D->ActiveBatch || Zen2D->ActiveBatch->Type != ZEN2D_BATCH_LINES) {
-        Zen2D->ActiveBatch = &Batches[BatchesCount++];
+        Zen2D->ActiveBatch = &Zen2D->Batches[Zen2D->BatchesCount++];
         Zen2D->ActiveBatch->Type = ZEN2D_BATCH_LINES;
         Zen2D->ActiveBatch->Data = Zen2D->Line.Memory + Zen2D->Line.AllocPos;
         Zen2D->ActiveBatch->DataLength = 0;
@@ -215,7 +212,7 @@ Zen2DBeginFrame() {
     {
         Zen2D->Rect.AllocPos = 0;
         Zen2D->Line.AllocPos = 0;
-        BatchesCount = 0;
+        Zen2D->BatchesCount = 0;
     }
     
     Zen2D->ActiveBatch = 0;
@@ -229,8 +226,8 @@ Zen2DBeginFrame() {
 
 internal void
 Zen2DEndFrame() {
-    for(i32 i = 0; i < BatchesCount; ++i) {
-        zen2d_batch * Batch = &Batches[i];
+    for(i32 i = 0; i < Zen2D->BatchesCount; ++i) {
+        zen2d_batch * Batch = &Zen2D->Batches[i];
         switch(Batch->Type) {
             case ZEN2D_BATCH_RECTS: {
                 glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_RECTANGLES]);

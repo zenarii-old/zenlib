@@ -3,7 +3,7 @@
 
 // NOTE(Abi): Implementations
 #include "zenlib/zenlib.c"
-// TODO(Abi): sort out stride v size, sort of the memory allocations
+
 internal void
 AppUpdate() {
     //fprintf(stderr, "[App] Begin frame\n");
