@@ -31,6 +31,7 @@
 #define unused(x) (void)(x)
 
 #define IsPowerOfTwo(x) !((x) & (x-1))
+#define Abs(x) ((x) >= 0 ? (x) : -(x))
 
 #define PI 3.1415926535897f
 

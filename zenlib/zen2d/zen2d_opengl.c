@@ -69,6 +69,13 @@ global u32 RectAllocPos = 0;
 global zen2d_batch Batches[ZEN2D_MAX_BATCHES] = {0};
 global u32 BatchesCount = 0;
 
+#define LineMax (1024)
+#define LineStride (6 * sizeof(f32))
+#define LineSize (2 * LineStride)
+global u32 LineVAO, LineVBO;
+global unsigned char LineData[LineMax * LineSize];
+global u32 LineAllocPos = 0;
+
 internal void
 Zen2DInit(memory_arena * Arena) {
     Zen2DOpenGLLoadAllFunctions();
@@ -84,6 +91,7 @@ Zen2DInit(memory_arena * Arena) {
         Zen2D->Shaders[i] = Zen2DOpenGLLoadShader(ShaderInfo[i].Name, ShaderInfo[i].VertexSource, ShaderInfo[i].FragmentSource);
     }
     
+    // NOTE(Abi): Rectangle Data
     {
         glGenVertexArrays(1, &RectVAO);
         glBindVertexArray(RectVAO);
@@ -91,6 +99,20 @@ Zen2DInit(memory_arena * Arena) {
         glGenBuffers(1, &RectVBO);
         glBindBuffer(GL_ARRAY_BUFFER, RectVBO);
         glBufferData(GL_ARRAY_BUFFER, RectMax * RectSize, 0, GL_DYNAMIC_DRAW);
+        // NOTE(Abi): Position data
+        Zen2DOpenGLAddFloatAttribute(0, 2, 6, 0);
+        // NOTE(Abi): Colour data
+        Zen2DOpenGLAddFloatAttribute(1, 4, 6, 2);
+    }
+    
+    // NOTE(Abi): Line Data
+    {
+        glGenVertexArrays(1, &LineVAO);
+        glBindVertexArray(LineVAO);
+        
+        glGenBuffers(1, &LineVBO);
+        glBindBuffer(GL_ARRAY_BUFFER, LineVBO);
+        glBufferData(GL_ARRAY_BUFFER, LineMax * LineSize, 0, GL_DYNAMIC_DRAW);
         // NOTE(Abi): Position data
         Zen2DOpenGLAddFloatAttribute(0, 2, 6, 0);
         // NOTE(Abi): Colour data
@@ -152,10 +174,52 @@ Zen2DPushRect(v4 Rect, v4 Colour) {
 }
 
 internal void
+Zen2DPushLineVertices(v2 Start, v2 End, v4 StartColour, v4 EndColour) {
+    if(!Zen2D->ActiveBatch || Zen2D->ActiveBatch->Type != ZEN2D_BATCH_LINES) {
+        Zen2D->ActiveBatch = &Batches[BatchesCount++];
+        Zen2D->ActiveBatch->Type = ZEN2D_BATCH_LINES;
+        Zen2D->ActiveBatch->Data = LineData + LineAllocPos;
+        Zen2D->ActiveBatch->DataLength = 0;
+    }
+    
+    // NOTE(Abi): Convert to screen coordinates
+    {
+        Start.x *= 2.f / Zen2D->RendererWidth;  Start.x -= 1;
+        Start.y *= 2.f / Zen2D->RendererHeight; Start.y -= 1;
+        End.x   *= 2.f / Zen2D->RendererWidth;  End.x   -= 1;
+        End.y   *= 2.f / Zen2D->RendererHeight; End.y   -= 1;
+    }
+    
+    GLubyte * Data = LineData + LineAllocPos;
+    {
+        ((v2 *)Data)[0]  = v2(Start.x, Start.y);
+        ((v2 *)Data)[1]  = v2(StartColour.x, StartColour.y);
+        ((v2 *)Data)[2]  = v2(StartColour.z, StartColour.w);
+        
+        ((v2 *)Data)[3]  = v2(End.x, End.y);
+        ((v2 *)Data)[4]  = v2(EndColour.x, EndColour.y);
+        ((v2 *)Data)[5]  = v2(EndColour.z, EndColour.w);
+    }
+    
+    LineAllocPos += LineSize;
+    Zen2D->ActiveBatch->DataLength += LineSize;
+}
+
+internal void
+Zen2DPushLine(v2 Start, v2 End, v4 Colour) {
+    Zen2DPushLineVertices(Start, End, Colour, Colour);
+}
+
+internal void
 Zen2DBeginFrame() {
-    RectAllocPos = 0;
+    // NOTE(Abi): Semi temp stuff
+    {
+        RectAllocPos = 0;
+        LineAllocPos = 0;
+        BatchesCount = 0;
+    }
+    
     Zen2D->ActiveBatch = 0;
-    BatchesCount = 0;
     // NOTE(Abi): Transfer Data from platform
     {
         Zen2D->RendererWidth  = Platform->ScreenWidth;
@@ -174,8 +238,19 @@ Zen2DEndFrame() {
                 glBindVertexArray(RectVAO);
                 glBindBuffer(GL_ARRAY_BUFFER, RectVBO);
                 glBufferSubData(GL_ARRAY_BUFFER, 0, Batch->DataLength, Batch->Data);
-                glDrawArrays(GL_TRIANGLES, 0, Batch->DataLength/RectStride);
+                i32 Count = Batch->DataLength/RectStride;
+                glDrawArrays(GL_TRIANGLES, 0, Count);
             } break;
+            
+            case ZEN2D_BATCH_LINES: {
+                glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_LINES]);
+                glBindVertexArray(LineVAO);
+                glBindBuffer(GL_ARRAY_BUFFER, LineVBO);
+                glBufferSubData(GL_ARRAY_BUFFER, 0, Batch->DataLength, Batch->Data);
+                i32 Count = Batch->DataLength/LineStride;
+                glDrawArrays(GL_LINES, 0, Count);
+            } break;
+            
             default: break;
         }
     }

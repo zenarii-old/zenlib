@@ -46,7 +46,7 @@ def generateShader(shader):
 	return info_string
 
 def main():
-	shader_names = ["rectangles.glsl"];
+	shader_names = ["rectangles.glsl", "lines.glsl"];
 	final_string = "";
 	final_string += "zen2d_shader_info ShaderInfo[] = {\n"
 	for shader in shader_names:

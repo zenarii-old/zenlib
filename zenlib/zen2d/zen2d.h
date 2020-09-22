@@ -10,6 +10,7 @@ typedef enum zen2d_batch_type zen2d_batch_type;
 enum zen2d_batch_type {
     ZEN2D_BATCH_NULL,
     ZEN2D_BATCH_RECTS,
+    ZEN2D_BATCH_LINES,
     
     ZEN2D_BATCH_COUNT
 };
@@ -37,11 +38,13 @@ f32 RendererHeight; \
 
 internal void Zen2DPushRect(v4 Rect, v4 Colour);
 internal void Zen2DPushRectVertices(v4 Rect, v4, v4, v4, v4);
-internal void Zen2DPushRectBorder(v4 Rect, v4 Colour);
+
+internal void Zen2DPushLineVertices(v2 Start, v2 End, v4 StartColour, v4 EndColour);
+internal void Zen2DPushLine(v2 Start, v2 End, v4 Colour);
 
 internal void Zen2DInit(memory_arena * Arena);
-internal void Zen2DBeginFrame();
-internal void Zen2DEndFrame();
+internal void Zen2DBeginFrame(void);
+internal void Zen2DEndFrame(void);
 
 
 

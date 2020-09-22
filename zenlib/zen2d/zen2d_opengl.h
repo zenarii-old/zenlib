@@ -20,6 +20,7 @@ struct zen2d_shader_info {
 
 enum zen2d_shader_type {
     ZEN2D_SHADER_RECTANGLES,
+    ZEN2D_SHADER_LINES,
     
     ZEN2D_SHADER_COUNT
 };
