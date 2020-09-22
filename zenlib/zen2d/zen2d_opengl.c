@@ -58,12 +58,16 @@ Zen2DOpenGLAddFloatAttribute(i32 ID, u32 Count, u32 Stride, u32 Offset) {
     glEnableVertexAttribArray(ID);
 }
 
-global u32 RectVAO, RectVBO;
 #define RectMax (1024)
 #define RectStride (6 * sizeof(f32))
 #define RectSize (6 * RectStride)
+
+global u32 RectVAO, RectVBO;
 global unsigned char RectData[RectMax * RectSize];
-global u32 RectAllocPos;
+global u32 RectAllocPos = 0;
+
+global zen2d_batch Batches[ZEN2D_MAX_BATCHES] = {0};
+global u32 BatchesCount = 0;
 
 internal void
 Zen2DInit(memory_arena * Arena) {
@@ -96,6 +100,13 @@ Zen2DInit(memory_arena * Arena) {
 
 internal void
 Zen2DPushRectVertices(v4 Rect, v4 Colour00, v4 Colour01, v4 Colour10, v4 Colour11){
+    if(!Zen2D->ActiveBatch || Zen2D->ActiveBatch->Type != ZEN2D_BATCH_RECTS) {
+        Zen2D->ActiveBatch = &Batches[BatchesCount++];
+        Zen2D->ActiveBatch->Type = ZEN2D_BATCH_RECTS;
+        Zen2D->ActiveBatch->Data = RectData + RectAllocPos;
+        Zen2D->ActiveBatch->DataLength = 0;
+    }
+    
     // NOTE(Abi): Convert from the screen coordinates to opengl ones
     {
         Rect.x *= 2.f / Zen2D->RendererWidth;  Rect.x -= 1;
@@ -132,6 +143,7 @@ Zen2DPushRectVertices(v4 Rect, v4 Colour00, v4 Colour01, v4 Colour10, v4 Colour1
         ((v2 *)Data)[17] = v2(Colour01.z, Colour01.w);
     }
     RectAllocPos += RectSize;
+    Zen2D->ActiveBatch->DataLength += RectSize;
 }
 
 internal void
@@ -142,7 +154,9 @@ Zen2DPushRect(v4 Rect, v4 Colour) {
 internal void
 Zen2DBeginFrame() {
     RectAllocPos = 0;
-    
+    Zen2D->ActiveBatch = 0;
+    BatchesCount = 0;
+    // NOTE(Abi): Transfer Data from platform
     {
         Zen2D->RendererWidth  = Platform->ScreenWidth;
         Zen2D->RendererHeight = Platform->ScreenHeight;
@@ -152,11 +166,17 @@ Zen2DBeginFrame() {
 
 internal void
 Zen2DEndFrame() {
-    
-    glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_RECTANGLES]);
-    glBindVertexArray(RectVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, RectVBO);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, RectAllocPos, RectData);
-    glDrawArrays(GL_TRIANGLES, 0, RectAllocPos/RectStride);
-    
+    for(i32 i = 0; i < BatchesCount; ++i) {
+        zen2d_batch * Batch = &Batches[i];
+        switch(Batch->Type) {
+            case ZEN2D_BATCH_RECTS: {
+                glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_RECTANGLES]);
+                glBindVertexArray(RectVAO);
+                glBindBuffer(GL_ARRAY_BUFFER, RectVBO);
+                glBufferSubData(GL_ARRAY_BUFFER, 0, Batch->DataLength, Batch->Data);
+                glDrawArrays(GL_TRIANGLES, 0, Batch->DataLength/RectStride);
+            } break;
+            default: break;
+        }
+    }
 }
