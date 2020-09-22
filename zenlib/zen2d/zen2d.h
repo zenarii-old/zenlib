@@ -5,6 +5,7 @@
 typedef struct zen2d zen2d;
 typedef struct texture texture;
 
+
 #define ZEN2D_MAX_BATCHES 1024
 typedef enum zen2d_batch_type zen2d_batch_type;
 enum zen2d_batch_type {
@@ -14,6 +15,8 @@ enum zen2d_batch_type {
     
     ZEN2D_BATCH_COUNT
 };
+
+
 
 typedef struct zen2d_batch zen2d_batch;
 struct zen2d_batch {

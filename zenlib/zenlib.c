@@ -1,8 +1,7 @@
 ZENAPPFUNC ZEN_APPLICATION_STATIC_LOAD(StaticLoad) {
     Platform = Platform_;
-    
 #ifdef ZEN2D
-    Zen2D = MemoryArenaAlloc(&Platform->PermenantArena, sizeof(Zen2D));
+    Zen2D = MemoryArenaAlloc(&Platform->PermenantArena, sizeof(*Zen2D));
     Zen2DInit(&Platform->PermenantArena);
 #endif
     
