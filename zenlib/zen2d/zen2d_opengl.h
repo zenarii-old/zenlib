@@ -24,19 +24,20 @@ enum zen2d_shader_type {
     ZEN2D_SHADER_COUNT
 };
 
-global u32 GlobalShaders[ZEN2D_SHADER_COUNT] = {0};
-
 struct zen2d {
     ZEN2D_COMMON;
     
+    u32 Shaders[ZEN2D_SHADER_COUNT];
+    
     u32 GeneralVAO;
     
-#define ZEN2DBATCHTYPE(lower_name, upper_name, size, max) \
+#define ZEN2DBATCHTYPE(lower_name, upper_name, stride, max) \
 struct zen2d_##lower_name##_data { \
 u32 VAO, VBO; \
 unsigned char * Memory; \
 u32 AllocPos; \
 u32 Stride; \
+u32 Size; \
 } upper_name; 
 #include "zen2d_batch_data_types.inc"
 };

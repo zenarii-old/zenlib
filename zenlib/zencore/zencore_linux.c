@@ -1,3 +1,4 @@
+// TODO(Abi): sort out the batching system for the zen2d system
 // NOTE(Abi): Linux Headers
 #include <unistd.h>
 #include <X11/Xlib.h>

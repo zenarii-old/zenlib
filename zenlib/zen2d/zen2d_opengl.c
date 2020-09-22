@@ -53,9 +53,20 @@ Zen2DOpenGLLoadShader(const char * Name, const char * VertexSource, const char *
 }
 
 internal void
+Zen2DOpenGLAddFloatAttribute(i32 ID, u32 Count, u32 Stride, u32 Offset) {
+    glVertexAttribPointer(ID, Count, GL_FLOAT, GL_FALSE, Stride * sizeof(f32), (void *)(Offset*sizeof(f32)));
+    glEnableVertexAttribArray(ID);
+}
+
+global u32 RectVAO, RectVBO;
+#define RectMax (1024)
+#define RectStride (6 * sizeof(f32))
+#define RectSize (6 * RectStride)
+global unsigned char RectData[RectMax * RectSize];
+global u32 RectAllocPos;
+
+internal void
 Zen2DInit(memory_arena * Arena) {
-    Zen2D->Batches = MemoryArenaAlloc(Arena, sizeof(zen2d_batch) * ZEN2D_MAX_BATCHES);
-    
     Zen2DOpenGLLoadAllFunctions();
     
     glEnable(GL_BLEND);
@@ -64,54 +75,36 @@ Zen2DInit(memory_arena * Arena) {
     glGenVertexArrays(1, &Zen2D->GeneralVAO);
     
 #include "shaders/generated_opengl_shaders.inc"
-    
     for(int i = 0; i < sizeof(ShaderInfo)/sizeof(ShaderInfo[0]); ++i) {
         fprintf(stderr, "[Zen2D] Loading '%s' shader.\n", ShaderInfo[i].Name);
-        GlobalShaders[i] = Zen2DOpenGLLoadShader(ShaderInfo[i].Name, ShaderInfo[i].VertexSource, ShaderInfo[i].FragmentSource);
+        Zen2D->Shaders[i] = Zen2DOpenGLLoadShader(ShaderInfo[i].Name, ShaderInfo[i].VertexSource, ShaderInfo[i].FragmentSource);
     }
     
-    
-#define ZEN2DBATCHTYPE(lower_name, name, size, max) \
-{ \
-glGenVertexArrays(1, &Zen2D->name.VAO); \
-glBindVertexArray(Zen2D->name.VAO); \
-    \
-glGenBuffers(1, &Zen2D->name.VBO); \
-glBindBuffer(GL_ARRAY_BUFFER, Zen2D->name.VBO); \
-    \
-glBufferData(GL_ARRAY_BUFFER, max * size, 0, GL_DYNAMIC_DRAW); \
-/* TODO This won't be the same for everything*/ \
-Zen2D->name.Stride = 6 * sizeof(f32); \
-Zen2D->name.Memory = MemoryArenaAlloc(Arena, (max * size)); \
-    \
-glBindVertexArray(0); \
-}
-#include "zen2d_batch_data_types.inc"
-    
-    // NOTE(Abi): Initialise rectangle data
     {
-        // TODO(Abi): wrap these two calls in a func
-        glBindVertexArray(Zen2D->Rect.VAO);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, Zen2D->Rect.Stride, 0);
-        glEnableVertexAttribArray(0);
+        glGenVertexArrays(1, &RectVAO);
+        glBindVertexArray(RectVAO);
         
-        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, Zen2D->Rect.Stride, (void *)(2 * sizeof(float)));
-        glEnableVertexAttribArray(1);
+        glGenBuffers(1, &RectVBO);
+        glBindBuffer(GL_ARRAY_BUFFER, RectVBO);
+        glBufferData(GL_ARRAY_BUFFER, RectMax * RectSize, 0, GL_DYNAMIC_DRAW);
+        // NOTE(Abi): Position data
+        Zen2DOpenGLAddFloatAttribute(0, 2, 6, 0);
+        // NOTE(Abi): Colour data
+        Zen2DOpenGLAddFloatAttribute(1, 4, 6, 2);
     }
 }
-global u32 DataLength;
 
 internal void
 Zen2DPushRectVertices(v4 Rect, v4 Colour00, v4 Colour01, v4 Colour10, v4 Colour11){
-    
-    
     // NOTE(Abi): Convert from the screen coordinates to opengl ones
-    Rect.x *= 2.f / Zen2D->RendererWidth;  Rect.x -= 1;
-    Rect.y *= 2.f / Zen2D->RendererHeight; Rect.y -= 1;
-    Rect.z *= 2.f / Zen2D->RendererWidth;  
-    Rect.w *= 2.f / Zen2D->RendererHeight; 
+    {
+        Rect.x *= 2.f / Zen2D->RendererWidth;  Rect.x -= 1;
+        Rect.y *= 2.f / Zen2D->RendererHeight; Rect.y -= 1;
+        Rect.z *= 2.f / Zen2D->RendererWidth;  
+        Rect.w *= 2.f / Zen2D->RendererHeight; 
+    }
     
-    GLubyte * Data = DataLength + Zen2D->Rect.Memory;
+    GLubyte * Data = RectData + RectAllocPos;
     {
         ((v2 *)Data)[0]  = v2(Rect.x, Rect.y);
         ((v2 *)Data)[1]  = v2(Colour00.x, Colour00.y);
@@ -138,9 +131,7 @@ Zen2DPushRectVertices(v4 Rect, v4 Colour00, v4 Colour01, v4 Colour10, v4 Colour1
         ((v2 *)Data)[16] = v2(Colour01.x, Colour01.y);
         ((v2 *)Data)[17] = v2(Colour01.z, Colour01.w);
     }
-    Zen2D->Rect.AllocPos += Zen2D->Rect.Stride * 6;
-    DataLength += Zen2D->Rect.Stride * 6;
-    
+    RectAllocPos += RectSize;
 }
 
 internal void
@@ -149,12 +140,8 @@ Zen2DPushRect(v4 Rect, v4 Colour) {
 }
 
 internal void
-Zen2DBeginFrame() { 
-    DataLength = 0;
-    
-#define ZEN2DBATCHTYPE(lower_name, name, size, max) \
-Zen2D->name.AllocPos = 0;
-#include "zen2d_batch_data_types.inc"
+Zen2DBeginFrame() {
+    RectAllocPos = 0;
     
     {
         Zen2D->RendererWidth  = Platform->ScreenWidth;
@@ -165,9 +152,11 @@ Zen2D->name.AllocPos = 0;
 
 internal void
 Zen2DEndFrame() {
-    glUseProgram(GlobalShaders[ZEN2D_SHADER_RECTANGLES]);
-    glBindVertexArray(Zen2D->Rect.VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, Zen2D->Rect.VBO);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, DataLength, Zen2D->Rect.Memory);
-    glDrawArrays(GL_TRIANGLES, 0, DataLength / 6);
+    
+    glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_RECTANGLES]);
+    glBindVertexArray(RectVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, RectVBO);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, RectAllocPos, RectData);
+    glDrawArrays(GL_TRIANGLES, 0, RectAllocPos/RectStride);
+    
 }

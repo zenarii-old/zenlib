@@ -26,7 +26,7 @@ global zen2d * Zen2D;
 #define ZEN2D_COMMON \
 struct { \
 zen2d_batch * ActiveBatch; \
-zen2d_batch * Batches; \
+zen2d_batch Batches[ZEN2D_MAX_BATCHES]; \
 u32 BatchesCount; \
 \
 f32 RendererWidth; \
