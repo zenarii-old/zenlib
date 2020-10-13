@@ -57,3 +57,17 @@ LinuxError(const char * Title, const char * Message) {
     fprintf(stderr, "%s: %s\n", Title, Message);
     LinuxMessageBox(Title, Message);
 }
+
+internal void *
+LinuxHeapAlloc(u32 SizeInBytes) {
+    void * Memory = malloc(SizeInBytes);
+    Assert(Memory != 0);
+    return Memory;
+}
+
+internal void
+LinuxHeapFree(void * Memory, u32 SizeInBytes) {
+    //b8 Success = munmap(Memory, SizeInBytes);
+    //Assert((Success == 0) && "Freed memory successfully");
+    free(Memory);
+}

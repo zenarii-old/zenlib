@@ -58,8 +58,83 @@ Zen2DOpenGLAddFloatAttribute(i32 ID, u32 Count, u32 Stride, u32 Offset) {
     glEnableVertexAttribArray(ID);
 }
 
+internal texture
+Zen2DLoadTexture(unsigned char * Data, i32 Width, i32 Height, i32 Channels) {
+    texture Texture = {0};
+    {
+        glGenTextures(1, &Texture.ID);
+        Texture.Width  = Width;
+        Texture.Height = Height;
+    }
+    glBindTexture(GL_TEXTURE_2D, Texture.ID);
+    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    
+    switch (Channels) {
+        case 4: {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Width, Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, Data);
+        } break;
+        case 3: {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Width, Height, 0, GL_RGB, GL_UNSIGNED_BYTE, Data);
+        } break;
+        case 2: {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RG, Width, Height, 0, GL_RG, GL_UNSIGNED_BYTE, Data);
+        } break;
+        case 1: {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, Width, Height, 0, GL_RED, GL_UNSIGNED_BYTE, Data);
+        } break;
+        default: Assert(0 && "Invalid number of channels");
+    }
+    glGenerateMipmap(GL_TEXTURE_2D);
+    
+    return Texture;
+}
+
+internal void
+Zen2DUnloadTexture(texture * Texture) {
+    glDeleteTextures(1, &Texture->ID);
+    MemorySet(Texture, 0, sizeof(texture));
+}
+
+internal b8
+Zen2DIsTextureValid(texture * Texture) {
+    return Texture->ID != 0;
+}
+// TODO(Abi): Font Scaling.
+internal font
+Zen2DLoadFont(void * PNGData, i32 Width, i32 Height, i32 Channels, font_glyph * Glyphs, u32 GlyphCount, u32 LineHeight, u32 FontSize, u32 Base, u32 LowestChar) {
+    font Font = {0};
+    Font.Texture = Zen2DLoadTexture(PNGData, Width, Height, Channels);
+    Font.Glyphs = Platform->HeapAlloc(sizeof(font_glyph) * GlyphCount);
+    MemoryCopy(Font.Glyphs, Glyphs, GlyphCount * sizeof(font_glyph));
+    Font.GlyphCount = GlyphCount;
+    Font.LowestChar = LowestChar;
+    Font.LineHeight = LineHeight;
+    Font.Base = Base;
+    Font.Size = FontSize;
+    
+    return Font;
+}
+
+internal void
+Zen2DUnloadFont(font * Font) {
+    Platform->HeapFree(Font->Glyphs, Font->GlyphCount * sizeof(font_glyph));
+    Zen2DUnloadTexture(&Font->Texture);
+    MemorySet(Font, 0, sizeof(font));
+}
+
+internal b8
+Zen2DIsFontValid(font * Font) {
+    return Zen2DIsTextureValid(&Font->Texture) && Font->Glyphs;
+}
+
 internal void
 Zen2DInit(memory_arena * Arena) {
+    Zen2DInitCommon();
+    
     Zen2DOpenGLLoadAllFunctions();
     
     glEnable(GL_BLEND);
@@ -73,7 +148,7 @@ Zen2DInit(memory_arena * Arena) {
         fprintf(stderr, "[Zen2D] Loading '%s' shader.\n", ShaderInfo[i].Name);
         Zen2D->Shaders[i] = Zen2DOpenGLLoadShader(ShaderInfo[i].Name, ShaderInfo[i].VertexSource, ShaderInfo[i].FragmentSource);
     }
-    // TODO(Abi): I believe that the memory arena allocation is destroying some of zen2d, if not all
+    
 #define ZEN2DBATCH(name, stride, size, max) \
 { \
 Zen2D->name.Stride = stride; \
@@ -111,6 +186,42 @@ Zen2D->name.AllocPos = 0; \
         Zen2DOpenGLAddFloatAttribute(0, 2, 6, 0);
         // NOTE(Abi): Colour data
         Zen2DOpenGLAddFloatAttribute(1, 4, 6, 2);
+        
+        glBindVertexArray(0);
+    }
+    
+    // NOTE(Abi): Texture Data
+    {
+        glGenVertexArrays(1, &Zen2D->Texture.VAO);
+        glBindVertexArray(Zen2D->Texture.VAO);
+        
+        glGenBuffers(1, &Zen2D->Texture.VBO);
+        glBindBuffer(GL_ARRAY_BUFFER, Zen2D->Texture.VBO);
+        glBufferData(GL_ARRAY_BUFFER, Zen2D->Texture.Max * Zen2D->Texture.Size, 0, GL_DYNAMIC_DRAW);
+        // NOTE(Abi): Position data
+        Zen2DOpenGLAddFloatAttribute(0, 2, 8, 0);
+        // NOTE(Abi): Colour data
+        Zen2DOpenGLAddFloatAttribute(1, 4, 8, 2);
+        // NOTE(Abi): UV data
+        Zen2DOpenGLAddFloatAttribute(2, 2, 8, 6);
+        
+        glBindVertexArray(0);
+    }
+    
+    // NOTE(Abi): Text Data
+    {
+        glGenVertexArrays(1, &Zen2D->Text.VAO);
+        glBindVertexArray(Zen2D->Text.VAO);
+        
+        glGenBuffers(1, &Zen2D->Text.VBO);
+        glBindBuffer(GL_ARRAY_BUFFER, Zen2D->Text.VBO);
+        glBufferData(GL_ARRAY_BUFFER, Zen2D->Text.Max * Zen2D->Text.Size, 0, GL_DYNAMIC_DRAW);
+        // NOTE(Abi): Position data
+        Zen2DOpenGLAddFloatAttribute(0, 2, 8, 0);
+        // NOTE(Abi): Colour data
+        Zen2DOpenGLAddFloatAttribute(1, 4, 8, 2);
+        // NOTE(Abi): UV data
+        Zen2DOpenGLAddFloatAttribute(2, 2, 8, 6);
         
         glBindVertexArray(0);
     }
@@ -206,12 +317,179 @@ Zen2DPushLine(v2 Start, v2 End, v4 Colour) {
     Zen2DPushLineVertices(Start, End, Colour, Colour);
 }
 
+// TODO(Abi): Tint method for textures.
+internal void
+Zen2DPushTexture(v4 Destination, texture Texture, v4 Source){
+    Assert(Texture.ID);
+    
+    if(!Zen2D->ActiveBatch || Zen2D->ActiveBatch->Type != ZEN2D_BATCH_TEXTURES || Zen2D->ActiveBatch->TexData.ID != Texture.ID) {
+        Zen2D->ActiveBatch = &Zen2D->Batches[Zen2D->BatchesCount++];
+        Zen2D->ActiveBatch->Type = ZEN2D_BATCH_TEXTURES;
+        Zen2D->ActiveBatch->TexData.ID = Texture.ID;
+        Zen2D->ActiveBatch->Data = Zen2D->Texture.Memory + Zen2D->Texture.AllocPos;
+        Zen2D->ActiveBatch->DataLength = 0;
+    }
+    
+    // NOTE(Abi): Convert from the screen coordinates
+    {
+        Destination.x *= 2.f / Zen2D->RendererWidth;  Destination.x -= 1;
+        Destination.y *= 2.f / Zen2D->RendererHeight; Destination.y -= 1;
+        Destination.z *= 2.f / Zen2D->RendererWidth;  
+        Destination.w *= 2.f / Zen2D->RendererHeight; 
+        
+        Source.x /= Texture.Width;  Source.Width  /= Texture.Width;
+        Source.y /= Texture.Height; Source.Height /= Texture.Height;
+    }
+    v4 Colour = v4(1.f, 1.f, 1.f, 1.f);
+    GLubyte * Data = Zen2D->Texture.Memory + Zen2D->Texture.AllocPos;
+    {
+        ((v2 *)Data)[0]  = v2(Destination.x, 
+                              Destination.y);
+        ((v2 *)Data)[1]  = v2(Colour.x, Colour.y);
+        ((v2 *)Data)[2]  = v2(Colour.z, Colour.w);
+        ((v2 *)Data)[3]  = v2(Source.x, Source.y);
+        
+        ((v2 *)Data)[4]  = v2(Destination.x + Destination.Width,
+                              Destination.y);
+        ((v2 *)Data)[5]  = v2(Colour.x, Colour.y);
+        ((v2 *)Data)[6]  = v2(Colour.z, Colour.w);
+        ((v2 *)Data)[7]  = v2(Source.x + Source.Width, Source.y);
+        
+        ((v2 *)Data)[8]  = v2(Destination.x,
+                              Destination.y + Destination.Height);
+        ((v2 *)Data)[9]  = v2(Colour.x, Colour.y);
+        ((v2 *)Data)[10] = v2(Colour.z, Colour.w);
+        ((v2 *)Data)[11] = v2(Source.x, Source.y + Source.Height);
+        
+        ((v2 *)Data)[12] = v2(Destination.x + Destination.Width, 
+                              Destination.y + Destination.Height);
+        ((v2 *)Data)[13] = v2(Colour.x, Colour.y);
+        ((v2 *)Data)[14] = v2(Colour.z, Colour.w);
+        ((v2 *)Data)[15] = v2(Source.x + Source.Width, Source.y + Source.Height);
+        
+        ((v2 *)Data)[16] = v2(Destination.x + Destination.Width,
+                              Destination.y);
+        ((v2 *)Data)[17] = v2(Colour.x, Colour.y);
+        ((v2 *)Data)[18] = v2(Colour.z, Colour.w);
+        ((v2 *)Data)[19] = v2(Source.x + Source.Width, Source.y);
+        
+        ((v2 *)Data)[20] = v2(Destination.x,
+                              Destination.y + Destination.Height);
+        ((v2 *)Data)[21] = v2(Colour.x, Colour.y);
+        ((v2 *)Data)[22] = v2(Colour.z, Colour.w);
+        ((v2 *)Data)[23] = v2(Source.x, Source.y + Source.Height);
+    }
+    Zen2D->Texture.AllocPos += Zen2D->Texture.Size;
+    Zen2D->ActiveBatch->DataLength += Zen2D->Texture.Size;
+}
+// TODO(Abi): Also default font
+// TODO(Abi): Rename this yo.
+// TODO(Abi): Nicer ordering of params
+internal void
+Zen2DPushTextFinalN(v2 StartPosition, font * Font, const char * String, u32 StringLength) {
+    Assert(Zen2DIsFontValid(Font));
+    
+    if(!Zen2D->ActiveBatch || Zen2D->ActiveBatch->Type != ZEN2D_BATCH_TEXT ||
+       Zen2D->ActiveBatch->FontData.p->Texture.ID != Font->Texture.ID) {
+        Zen2D->ActiveBatch = &Zen2D->Batches[Zen2D->BatchesCount++];
+        Zen2D->ActiveBatch->Type = ZEN2D_BATCH_TEXT;
+        Zen2D->ActiveBatch->FontData.p = Font;
+        Zen2D->ActiveBatch->Data = Zen2D->Text.Memory + Zen2D->Text.AllocPos;
+        Zen2D->ActiveBatch->DataLength = 0;
+    }
+    
+    // TODO(Abi): Center x/y, float right etc
+    v2 Cursor = StartPosition;
+    v4 Colour = v4(1.f, 1.f, 1.f, 1.f);
+    
+    for(int i = 0; i < StringLength; ++i) {
+        if(String[i] == '\n') {
+            Cursor.y -= Font->LineHeight; 
+            Cursor.x = StartPosition.x;
+            continue;
+        }
+        
+        font_glyph Glyph = Font->Glyphs[String[i] - Font->LowestChar];
+        Log("Using Glyph '%c' (%d)", Glyph.ID, Glyph.ID);
+        f32 FontScale = 1.f;
+        v4 Destination = v4(Cursor.x + (Glyph.XOffset * FontScale),
+                            Cursor.y + Font->LineHeight - ((Glyph.YOffset + Glyph.Height) * FontScale),
+                            Glyph.Width * FontScale,
+                            Glyph.Height * FontScale);
+        PrintV4(Destination);
+        
+        // HARDCODE(Abi): 
+        v4 Source = v4(Glyph.x,
+                       512 - Glyph.y - Glyph.Height,
+                       Glyph.Width,
+                       Glyph.Height);
+        
+        // NOTE(Abi): Convert to Screen Coordinates
+        {
+            Destination.x *= 2.f / Zen2D->RendererWidth;  Destination.x -= 1;
+            Destination.y *= 2.f / Zen2D->RendererHeight; Destination.y -= 1;
+            Destination.z *= 2.f / Zen2D->RendererWidth;  
+            Destination.w *= 2.f / Zen2D->RendererHeight; 
+            
+            Source.x /= Font->Texture.Width;  Source.Width  /= Font->Texture.Width;
+            Source.y /= Font->Texture.Height; Source.Height /= Font->Texture.Height;
+        }
+        
+        GLubyte * Data = Zen2D->Text.Memory + Zen2D->Text.AllocPos;
+        {
+            ((v2 *)Data)[0]  = v2(Destination.x, 
+                                  Destination.y);
+            ((v2 *)Data)[1]  = v2(Colour.x, Colour.y);
+            ((v2 *)Data)[2]  = v2(Colour.z, Colour.w);
+            ((v2 *)Data)[3]  = v2(Source.x, Source.y);
+            
+            ((v2 *)Data)[4]  = v2(Destination.x + Destination.Width,
+                                  Destination.y);
+            ((v2 *)Data)[5]  = v2(Colour.x, Colour.y);
+            ((v2 *)Data)[6]  = v2(Colour.z, Colour.w);
+            ((v2 *)Data)[7]  = v2(Source.x + Source.Width, Source.y);
+            
+            ((v2 *)Data)[8]  = v2(Destination.x,
+                                  Destination.y + Destination.Height);
+            ((v2 *)Data)[9]  = v2(Colour.x, Colour.y);
+            ((v2 *)Data)[10] = v2(Colour.z, Colour.w);
+            ((v2 *)Data)[11] = v2(Source.x, Source.y + Source.Height);
+            
+            ((v2 *)Data)[12] = v2(Destination.x + Destination.Width, 
+                                  Destination.y + Destination.Height);
+            ((v2 *)Data)[13] = v2(Colour.x, Colour.y);
+            ((v2 *)Data)[14] = v2(Colour.z, Colour.w);
+            ((v2 *)Data)[15] = v2(Source.x + Source.Width, Source.y + Source.Height);
+            
+            ((v2 *)Data)[16] = v2(Destination.x + Destination.Width,
+                                  Destination.y);
+            ((v2 *)Data)[17] = v2(Colour.x, Colour.y);
+            ((v2 *)Data)[18] = v2(Colour.z, Colour.w);
+            ((v2 *)Data)[19] = v2(Source.x + Source.Width, Source.y);
+            
+            ((v2 *)Data)[20] = v2(Destination.x,
+                                  Destination.y + Destination.Height);
+            ((v2 *)Data)[21] = v2(Colour.x, Colour.y);
+            ((v2 *)Data)[22] = v2(Colour.z, Colour.w);
+            ((v2 *)Data)[23] = v2(Source.x, Source.y + Source.Height);
+        }
+        
+        Zen2D->Text.AllocPos += Zen2D->Text.Size;
+        Zen2D->ActiveBatch->DataLength += Zen2D->Texture.Size;
+        Cursor.x += Glyph.XAdvance;
+    }
+}
+
 internal void
 Zen2DBeginFrame() {
     // NOTE(Abi): Semi temp stuff
     {
         Zen2D->Rect.AllocPos = 0;
         Zen2D->Line.AllocPos = 0;
+        Zen2D->Text.AllocPos = 0;
+        Zen2D->Texture.AllocPos = 0;
+        glClearColor(0.f, 0.f, 0.f, 1.f);
+        glClear(GL_COLOR_BUFFER_BIT);
         Zen2D->BatchesCount = 0;
     }
     
@@ -253,7 +531,36 @@ Zen2DEndFrame() {
                 glBindVertexArray(0);
             } break;
             
-            default: break;
+            case ZEN2D_BATCH_TEXTURES: {
+                glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_TEXTURES]);
+                glBindVertexArray(Zen2D->Texture.VAO);
+                {
+                    glBindTexture(GL_TEXTURE_2D, Batch->TexData.ID);
+                    glBindBuffer(GL_ARRAY_BUFFER, Zen2D->Texture.VBO);
+                    glBufferSubData(GL_ARRAY_BUFFER, 0, Batch->DataLength, Batch->Data);
+                    i32 Count = Batch->DataLength/Zen2D->Texture.Stride;
+                    glDrawArrays(GL_TRIANGLES, 0, Count);
+                }
+                glBindVertexArray(0);
+            } break;
+            
+            case ZEN2D_BATCH_TEXT: {
+                glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_TEXT]);
+                glBindVertexArray(Zen2D->Text.VAO);
+                {
+#if 0
+                    font * Font = Batch->BatchSpecificData;
+#endif
+                    glBindTexture(GL_TEXTURE_2D, Batch->FontData.p->Texture.ID);
+                    glBindBuffer(GL_ARRAY_BUFFER, Zen2D->Text.VBO);
+                    glBufferSubData(GL_ARRAY_BUFFER, 0, Batch->DataLength, Batch->Data);
+                    i32 Count = Batch->DataLength/Zen2D->Text.Stride;
+                    glDrawArrays(GL_TRIANGLES, 0, Count);
+                }
+                glBindVertexArray(0);
+            } break;
+            
+            default: Assert(0);
         }
     }
 }

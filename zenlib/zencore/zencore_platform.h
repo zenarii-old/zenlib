@@ -21,6 +21,8 @@ enum mouse_type {
 
 typedef struct platform platform;
 struct platform {
+    b8 AppShouldQuit;
+    
     f64 TargetFPS;
     f32 Delta;
     
@@ -37,7 +39,10 @@ struct platform {
     memory_arena ScratchArena;
     
     // NOTE(Abi): Function pointers
-    void (*Error)(const char * Title, const char * Message);
+    void   (*Error)(const char * Title, const char * Message);
+    char * (*LoadFile)(const char * Path);
+    void * (*HeapAlloc)(u32 Size);
+    void   (*HeapFree)(void * Memory, u32 Size);
 #ifdef USE_OPENGL
     void * (*OpenGLLoadProcedure)(const char * Name);
 #endif
@@ -54,6 +59,11 @@ ZenPlatformBeginFrame(void) {
 internal void
 ZenPlatformEndFrame(void) {
     
+}
+
+internal void
+ZenPlatformQuit(void) {
+    Platform->AppShouldQuit = 1;
 }
 
 #ifdef _MSC_VER

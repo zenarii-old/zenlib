@@ -10,8 +10,6 @@ struct linux_app_code {
     time_t LastWriteTime;
 };
 
-#define T(x) fprintf(stderr, "%s\n", x);
-
 internal b8
 LinuxAppCodeLoad(linux_app_code * AppCode) {
     b8 Success = 0;

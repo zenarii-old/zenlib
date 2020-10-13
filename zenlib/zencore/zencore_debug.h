@@ -15,6 +15,6 @@ enum debug_log_type {
 #define Log(...) DebugLog(0, __FILE__, __LINE__, __VA_ARGS__);
 #define LogWarning(...) DebugLog(DEBUG_LOG_WARNING, __FILE__, __LINE__, __VA_ARGS__);
 #define LogError(...) DebugLog(DEBUG_LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__);
-
+#define PrintV4(v) Log("v4 {%f, %f, %f, %f}", (v).x, (v).y, (v).z, (v).w);
 
 #endif //ZENCORE_LINUX_DEBUG_H

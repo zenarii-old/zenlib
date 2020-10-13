@@ -5,6 +5,7 @@
 #include <X11/XKBlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/mman.h>
 #undef Success
 
 // NOTE(Abi): OpenGL
@@ -114,9 +115,8 @@ LinuxProcessEvent(XEvent Event) {
             GlobalPlatform.MouseDown[ButtonIndex] = ButtonDown;
         } break;
         
-        
         case MotionNotify: {
-            GlobalPlatform.MousePosition = v2(Event.xmotion.x, Event.xmotion.y);
+            GlobalPlatform.MousePosition = v2(Event.xmotion.x, GlobalPlatform.ScreenHeight - Event.xmotion.y);
         } break;
         
     }
@@ -190,6 +190,9 @@ int main(int argc, char ** argv) {
         
         // NOTE(Abi): Set function pointers
         GlobalPlatform.Error = LinuxError;
+        GlobalPlatform.LoadFile = LinuxLoadFile;
+        GlobalPlatform.HeapAlloc = LinuxHeapAlloc;
+        GlobalPlatform.HeapFree = LinuxHeapFree;
 #ifdef USE_OPENGL
         GlobalPlatform.OpenGLLoadProcedure = LinuxOpenGLLoadProcedure;
 #endif
@@ -200,8 +203,7 @@ int main(int argc, char ** argv) {
     LinuxAppCode.StaticLoad(&GlobalPlatform);
     LinuxAppCode.HotLoad(&GlobalPlatform);
     
-    b8 AppShouldQuit = 0;
-    while (!AppShouldQuit) {
+    while (!Platform->AppShouldQuit) {
         ZenPlatformBeginFrame();
         LinuxTimerBeginFrame();
         LinuxAppCodeBeginFrame(&LinuxAppCode);
@@ -212,7 +214,7 @@ int main(int argc, char ** argv) {
             XNextEvent(XDisplay, &Event);
             
             if (Event.type == ClientMessage && Event.xclient.data.l[0] == WindowCloseID) {
-                AppShouldQuit = 1;
+                Platform->AppShouldQuit = 1;
             }
             else {
                 LinuxProcessEvent(Event);
