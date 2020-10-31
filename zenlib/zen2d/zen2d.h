@@ -27,6 +27,8 @@ struct { \
 zen2d_batch * ActiveBatch; \
 zen2d_batch Batches[ZEN2D_MAX_BATCHES]; \
 u32 BatchesCount; \
+/*TODO(Abi):*/\
+font * DefaultFont;\
 \
 f32 RendererWidth; \
 f32 RendererHeight; \
@@ -39,12 +41,15 @@ internal void Zen2DPushLineVertices(v2 Start, v2 End, v4 StartColour, v4 EndColo
 internal void Zen2DPushLine(v2 Start, v2 End, v4 Colour);
 internal void Zen2DPushTexture(v4 Destination, texture Texture, v4 Source);
 
-internal void Zen2DPushText();
+
 
 internal font Zen2DLoadFontFromFNTAndPNG(const char * FNTPath, const char * PNGPath);
 internal font Zen2DLoadFont(void * PNGData, i32 Width, i32 Height, i32 Channels, font_glyph * Glyphs, u32 GlyphCount, u32 LineHeight, u32 FontSize, u32 Base, u32 LowestChar);
-internal texture Zen2DLoadTexture(unsigned char * Data, i32 Width, i32 Height, i32 Channels);
-internal texture Zen2DLoadTextureFromPNG(const char * Path);
+
+#define ZEN2D_TEXTURE_NEAREST (1<<0)
+#define ZEN2D_TEXTURE_LINEAR  (1<<1)
+internal texture Zen2DLoadTexture(unsigned char * Data, i32 Width, i32 Height, i32 Channels, u32 Flags);
+internal texture Zen2DLoadTextureFromPNG(const char * Path, u32 Flags);
 internal void Zen2DInitCommon(void);
 internal void Zen2DInit(memory_arena * Arena);
 internal void Zen2DBeginFrame(void);

@@ -10,11 +10,11 @@ Zen2DInitCommon(void) {
 }
 
 internal texture
-Zen2DLoadTextureFromPNG(const char * Path) {
+Zen2DLoadTextureFromPNG(const char * Path, u32 Flags) {
     i32 Width, Height, Channels;
     unsigned char * Data = stbi_load(Path, &Width, &Height, &Channels, 0);
     
-    texture T = Zen2DLoadTexture(Data, Width, Height, Channels);
+    texture T = Zen2DLoadTexture(Data, Width, Height, Channels, Flags);
     
     stbi_image_free(Data);
     return T;
@@ -33,6 +33,8 @@ Zen2DLoadFontFromFNTAndPNG(const char * FNTPath, const char * PNGPath) {
     u32 FontSize = 0;
     u32 LineHeight = 0;
     u32 Base = 0;
+    v4 Padding = {0};
+    
     char Name[64] = {0};
     b32 Commented = 0;
     
@@ -58,11 +60,6 @@ Zen2DLoadFontFromFNTAndPNG(const char * FNTPath, const char * PNGPath) {
             switch (ReadType) {
                 case READ_NONE: {
                     if(FNTData[i] == '\n') {
-#if 0
-                        if(CurrentGlyph) {
-                            Log("Glyph (%c): %d, %d, %d, %d, %d, %d, %d", (char)(CurrentGlyph - Glyphs), CurrentGlyph->x, CurrentGlyph->y, CurrentGlyph->Width, CurrentGlyph->Height, CurrentGlyph->XOffset, CurrentGlyph->YOffset, CurrentGlyph->XAdvance);
-                        }
-#endif
                         CurrentGlyph = 0;
                     }
                     
@@ -95,6 +92,19 @@ Zen2DLoadFontFromFNTAndPNG(const char * FNTPath, const char * PNGPath) {
                     if(StringCompareCaseInsensitive("chars", Name)) {
                         GlyphCount = Value;
                     }
+                    else if(StringCompareCaseInsensitive("padding", Name)) {
+                        Padding.x = Value;
+                        while(FNTData[i] != ',') {++i;} ++i;
+                        Value = GetIntFromString(FNTData + i);
+                        Padding.y = Value;
+                        while(FNTData[i] != ',') {++i;} ++i;
+                        Value = GetIntFromString(FNTData + i);
+                        Padding.z = Value;
+                        while(FNTData[i] != ',') {++i;} ++i;
+                        Value = GetIntFromString(FNTData + i);
+                        Padding.w = Value;
+                        PrintV4(Padding);
+                    }
                     else if(StringCompareCaseInsensitive("id", Name) && Value != 0) {
                         GlyphCount++;
                         CurrentGlyph = &Glyphs[Value];
@@ -102,7 +112,8 @@ Zen2DLoadFontFromFNTAndPNG(const char * FNTPath, const char * PNGPath) {
                         if(Value < LowestCharValue) LowestCharValue = Value;
                     }
                     else if(StringCompareCaseInsensitive("xadvance", Name)) {
-                        CurrentGlyph->XAdvance = Value;
+                        // NOTE(Abi): If XAdvance ever gets fucky, check this.
+                        CurrentGlyph->XAdvance = Value - (Padding.x + Padding.z);
                     }
                     else if(StringCompareCaseInsensitive("xoffset", Name)) {
                         CurrentGlyph->XOffset = Value;
@@ -142,13 +153,45 @@ Zen2DLoadFontFromFNTAndPNG(const char * FNTPath, const char * PNGPath) {
         }
         
     }
-    Log("Lowest char: %c (%d)", LowestCharValue, LowestCharValue);
-    Log("Lineheight: %d", LineHeight);
     font Font = Zen2DLoadFont(PNGData, Width, Height, Channels, Glyphs + LowestCharValue, 
                               GlyphCount, LineHeight, FontSize, Base, LowestCharValue);
     
     stbi_image_free(PNGData);
     return Font;
+}
+
+internal void
+Zen2DSetDefaultFont(font * Font) {
+    Zen2D->DefaultFont = Font;
+}
+
+internal font *
+Zen2DGetDefaultFont(void) {
+    return Zen2D->DefaultFont;
+}
+
+internal f32
+Zen2DGetStringWidthN(const char * String, font * Font, f32 Size, u32 n) {
+    f32 MaxLineWidth = 0;
+    f32 LineWidth = 0;
+    f32 FontScale = Size / Font->Size;
+    for(i32 i = 0; i < n; ++i) {
+        font_glyph * Glyph = Font->Glyphs + (String[i] - Font->LowestChar);
+        if(String[i] == '\n') {
+            if(MaxLineWidth < LineWidth) MaxLineWidth = LineWidth;
+            LineWidth = 0;
+            continue;
+        }
+        LineWidth += Glyph->XAdvance * FontScale;
+    }
+    if(MaxLineWidth < LineWidth) MaxLineWidth = LineWidth;
+    
+    return MaxLineWidth;
+}
+
+internal f32
+Zen2DGetStringWidth(const char * String, font * Font, f32 Size) {
+    return Zen2DGetStringWidthN(String, Font, Size, StringLength(String));
 }
 
 #ifdef USE_OPENGL

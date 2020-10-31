@@ -11,7 +11,7 @@
 #define OPENGLPROC(function, type) global PFNGL##type##PROC gl##function;
 #include "zen2d_opengl_proc_list.inc"
 
-#define ZEN2D_MAX_BATCHES 1024
+#define ZEN2D_MAX_BATCHES 2048
 typedef enum zen2d_batch_type zen2d_batch_type;
 enum zen2d_batch_type {
     ZEN2D_BATCH_NULL,

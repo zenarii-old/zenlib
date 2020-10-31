@@ -15,6 +15,7 @@ void main() {
 }
 
 @fragment
+//the smaller the text the higher the edge value desired
 #version 330 core
 
 uniform sampler2D Texture;
@@ -22,8 +23,12 @@ in vec4 fColour;
 in vec2 fTexCoords;
 
 out vec4 FragColour;
+const float Width = 0.48;
+const float Edge = 0.12;
 
 void main() {
-	FragColour = fColour * texture(Texture, fTexCoords);
-	//FragColour = vec4(1.f, 1.f, 1.f, 1.f);
+	float Distance = 1.0 - texture(Texture, fTexCoords).a;
+	float Alpha = 1.0 - smoothstep(Width, Width + Edge, Distance);
+
+	FragColour = vec4(fColour.r, fColour.g, fColour.b, fColour.a * Alpha);
 }

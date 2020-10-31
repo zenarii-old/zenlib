@@ -59,7 +59,7 @@ Zen2DOpenGLAddFloatAttribute(i32 ID, u32 Count, u32 Stride, u32 Offset) {
 }
 
 internal texture
-Zen2DLoadTexture(unsigned char * Data, i32 Width, i32 Height, i32 Channels) {
+Zen2DLoadTexture(unsigned char * Data, i32 Width, i32 Height, i32 Channels, u32 Flags) {
     texture Texture = {0};
     {
         glGenTextures(1, &Texture.ID);
@@ -68,10 +68,17 @@ Zen2DLoadTexture(unsigned char * Data, i32 Width, i32 Height, i32 Channels) {
     }
     glBindTexture(GL_TEXTURE_2D, Texture.ID);
     
+    
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    {
+        u32 Magnification = GL_NEAREST;
+        if(Flags & ZEN2D_TEXTURE_LINEAR) Magnification = GL_LINEAR;
+        else if(Flags & ZEN2D_TEXTURE_NEAREST) Magnification = GL_NEAREST;
+        
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, Magnification);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, Magnification);
+    }
     
     switch (Channels) {
         case 4: {
@@ -103,11 +110,11 @@ internal b8
 Zen2DIsTextureValid(texture * Texture) {
     return Texture->ID != 0;
 }
-// TODO(Abi): Font Scaling.
+
 internal font
 Zen2DLoadFont(void * PNGData, i32 Width, i32 Height, i32 Channels, font_glyph * Glyphs, u32 GlyphCount, u32 LineHeight, u32 FontSize, u32 Base, u32 LowestChar) {
     font Font = {0};
-    Font.Texture = Zen2DLoadTexture(PNGData, Width, Height, Channels);
+    Font.Texture = Zen2DLoadTexture(PNGData, Width, Height, Channels, ZEN2D_TEXTURE_LINEAR);
     Font.Glyphs = Platform->HeapAlloc(sizeof(font_glyph) * GlyphCount);
     MemoryCopy(Font.Glyphs, Glyphs, GlyphCount * sizeof(font_glyph));
     Font.GlyphCount = GlyphCount;
@@ -382,13 +389,13 @@ Zen2DPushTexture(v4 Destination, texture Texture, v4 Source){
     Zen2D->Texture.AllocPos += Zen2D->Texture.Size;
     Zen2D->ActiveBatch->DataLength += Zen2D->Texture.Size;
 }
-// TODO(Abi): Also default font
-// TODO(Abi): Rename this yo.
-// TODO(Abi): Nicer ordering of params
+
+
 internal void
-Zen2DPushTextFinalN(v2 StartPosition, font * Font, const char * String, u32 StringLength) {
+Zen2DPushTextFontColourN(const char * String, u32 StringLength, font * Font, v2 StartPosition, f32 FontSize, v4 Colour) {
     Assert(Zen2DIsFontValid(Font));
     
+    f32 FontScale = FontSize / (f32)Font->Size;
     if(!Zen2D->ActiveBatch || Zen2D->ActiveBatch->Type != ZEN2D_BATCH_TEXT ||
        Zen2D->ActiveBatch->FontData.p->Texture.ID != Font->Texture.ID) {
         Zen2D->ActiveBatch = &Zen2D->Batches[Zen2D->BatchesCount++];
@@ -400,27 +407,25 @@ Zen2DPushTextFinalN(v2 StartPosition, font * Font, const char * String, u32 Stri
     
     // TODO(Abi): Center x/y, float right etc
     v2 Cursor = StartPosition;
-    v4 Colour = v4(1.f, 1.f, 1.f, 1.f);
     
     for(int i = 0; i < StringLength; ++i) {
         if(String[i] == '\n') {
-            Cursor.y -= Font->LineHeight; 
+            // HACK(Abi): 0.5 * Font Base is just a made up value
+            Cursor.y -= Font->LineHeight * FontScale - 0.5 * Font->Base * FontScale; 
             Cursor.x = StartPosition.x;
             continue;
         }
         
         font_glyph Glyph = Font->Glyphs[String[i] - Font->LowestChar];
-        Log("Using Glyph '%c' (%d)", Glyph.ID, Glyph.ID);
-        f32 FontScale = 1.f;
+        
         v4 Destination = v4(Cursor.x + (Glyph.XOffset * FontScale),
-                            Cursor.y + Font->LineHeight - ((Glyph.YOffset + Glyph.Height) * FontScale),
+                            Cursor.y + Font->Base * FontScale -  ((Glyph.YOffset + Glyph.Height) * FontScale),
                             Glyph.Width * FontScale,
                             Glyph.Height * FontScale);
-        PrintV4(Destination);
         
         // HARDCODE(Abi): 
         v4 Source = v4(Glyph.x,
-                       512 - Glyph.y - Glyph.Height,
+                       Glyph.y + Glyph.Height,
                        Glyph.Width,
                        Glyph.Height);
         
@@ -433,6 +438,7 @@ Zen2DPushTextFinalN(v2 StartPosition, font * Font, const char * String, u32 Stri
             
             Source.x /= Font->Texture.Width;  Source.Width  /= Font->Texture.Width;
             Source.y /= Font->Texture.Height; Source.Height /= Font->Texture.Height;
+            Source.y = 1.0 - Source.y;
         }
         
         GLubyte * Data = Zen2D->Text.Memory + Zen2D->Text.AllocPos;
@@ -476,30 +482,49 @@ Zen2DPushTextFinalN(v2 StartPosition, font * Font, const char * String, u32 Stri
         
         Zen2D->Text.AllocPos += Zen2D->Text.Size;
         Zen2D->ActiveBatch->DataLength += Zen2D->Texture.Size;
-        Cursor.x += Glyph.XAdvance;
+        Cursor.x += Glyph.XAdvance * FontScale;
     }
 }
 
 internal void
+Zen2DPushTextFontN(const char * Text, u32 Length, font * Font, v2 Position, f32 Size) {
+    v4 Colour = v4(1.f, 1.f, 1.f, 1.f);
+    Zen2DPushTextFontColourN(Text, Length, Font, Position, Size, Colour);
+}
+
+internal void
+Zen2DPushTextFont(const char * Text, font * Font, v2 Position, f32 Size) {
+    Zen2DPushTextFontN(Text, strlen(Text), Font, Position, Size);
+}
+
+internal void
+Zen2DPushTextN(const char * Text, u32 Length, v2 Position, f32 Size) {
+    Zen2DPushTextFontN(Text, Length, Zen2D->DefaultFont, Position, Size);
+}
+
+internal void
+Zen2DPushText(const char * Text, v2 Position, f32 Size) {
+    Zen2DPushTextFont(Text, Zen2D->DefaultFont, Position, Size);
+}
+
+internal void
 Zen2DBeginFrame() {
-    // NOTE(Abi): Semi temp stuff
+    // NOTE(Abi): Semi temp stuff, will eventually use FBOs and things
     {
-        Zen2D->Rect.AllocPos = 0;
-        Zen2D->Line.AllocPos = 0;
-        Zen2D->Text.AllocPos = 0;
-        Zen2D->Texture.AllocPos = 0;
         glClearColor(0.f, 0.f, 0.f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT);
-        Zen2D->BatchesCount = 0;
     }
     
+#define ZEN2DBATCH(name, ...) Zen2D->name.AllocPos = 0;
+#include "zen2d_batch_data_types.inc"
+    Zen2D->BatchesCount = 0;
     Zen2D->ActiveBatch = 0;
+    
     // NOTE(Abi): Transfer Data from platform
     {
         Zen2D->RendererWidth  = Platform->ScreenWidth;
         Zen2D->RendererHeight = Platform->ScreenHeight;
     }
-    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 internal void
@@ -548,9 +573,6 @@ Zen2DEndFrame() {
                 glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_TEXT]);
                 glBindVertexArray(Zen2D->Text.VAO);
                 {
-#if 0
-                    font * Font = Batch->BatchSpecificData;
-#endif
                     glBindTexture(GL_TEXTURE_2D, Batch->FontData.p->Texture.ID);
                     glBindBuffer(GL_ARRAY_BUFFER, Zen2D->Text.VBO);
                     glBufferSubData(GL_ARRAY_BUFFER, 0, Batch->DataLength, Batch->Data);

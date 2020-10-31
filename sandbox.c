@@ -9,13 +9,11 @@ internal void
 AppInit() {
     fprintf(stderr, "[App] Initialised\n");
     Arial = Zen2DLoadFontFromFNTAndPNG("arial.fnt", "arial.png");
-    
+    Zen2DSetDefaultFont(&Arial);
 }
 
 internal void
 AppUpdate() {
-    char * Str = "Abi Baxter, yeet \ndelete";
-    Zen2DPushTextFinalN(v2(100, 100), &Arial, Str, strlen(Str));
     
 }
 

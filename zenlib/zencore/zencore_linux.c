@@ -25,14 +25,16 @@ global Atom WindowCloseID;
 global platform GlobalPlatform;
 
 // NOTE(Abi): Zenlib Implementations
+
+#ifdef USE_OPENGL
+#include "zencore_linux_opengl.c"
+#endif
+
 #include "zencore_linux_time.c"
 #include "zencore_linux_misc.c"
 #include "zencore_linux_fileio.c"
 #include "zencore_linux_app_code.c"
 
-#ifdef USE_OPENGL
-#include "zencore_linux_opengl.c"
-#endif
 
 //~
 
@@ -77,6 +79,14 @@ LinuxProcessEvent(XEvent Event) {
                     KeyIndex = ZKEY_BACKSPACE;
                     PutChar = '\b';
                 } break;
+                case XK_period: {
+                    KeyIndex = ZKEY_PERIOD;
+                    PutChar = '.';
+                } break;
+                case XK_comma: {
+                    KeyIndex = ZKEY_COMMA;
+                    PutChar = ',';
+                } break;
                 default: {
                     if(KeySymbol >= XK_A && KeySymbol <= XK_Z) {
                         KeyIndex = ZKEY_A + KeySymbol - XK_A;
@@ -92,7 +102,10 @@ LinuxProcessEvent(XEvent Event) {
                 } break;
             }
             GlobalPlatform.KeyDown[KeyIndex] = KeyDown;
-            //TODO if(KeyDown && PutChar) _ZPutCharacter(PutChar);
+            if(KeyDown && PutChar && GlobalPlatform.PutCharactersCount < MAX_PUT_CHARACTERS) {
+                GlobalPlatform.PutCharacters[GlobalPlatform.PutCharactersCount++]
+                    = PutChar;
+            }
         } break;
         
         // NOTE(Abi): Mouse Buttons

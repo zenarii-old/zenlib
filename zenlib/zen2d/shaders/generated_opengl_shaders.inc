@@ -93,6 +93,7 @@ zen2d_shader_info ShaderInfo[] = {
 		"	fTexCoords = inTexCoords;\n" \
 		"}\n" \
 		"\n",
+		"//the smaller the text the higher the edge value desired\n" \
 		"#version 330 core\n" \
 		"\n" \
 		"uniform sampler2D Texture;\n" \
@@ -100,10 +101,14 @@ zen2d_shader_info ShaderInfo[] = {
 		"in vec2 fTexCoords;\n" \
 		"\n" \
 		"out vec4 FragColour;\n" \
+		"const float Width = 0.48;\n" \
+		"const float Edge = 0.12;\n" \
 		"\n" \
 		"void main() {\n" \
-		"	FragColour = fColour * texture(Texture, fTexCoords);\n" \
-		"	//FragColour = vec4(1.f, 1.f, 1.f, 1.f);\n" \
+		"	float Distance = 1.0 - texture(Texture, fTexCoords).a;\n" \
+		"	float Alpha = 1.0 - smoothstep(Width, Width + Edge, Distance);\n" \
+		"\n" \
+		"	FragColour = vec4(fColour.r, fColour.g, fColour.b, fColour.a * Alpha);\n" \
 		"}\n"
 	},
 };

@@ -1,9 +1,11 @@
 // NOTE(Abi): Modified GUI Program Skeleton from Handmade Network
 // TODO(Abi): Add a button to close, make it look nicer
+// TODO(Abi): Maybe just use the inbuilt renderer, also fix the windowing issues,
+// in fact, once i have a dev terminal i won't need this bc it will either dump to inbuilt console or linux one
 internal void
 LinuxMessageBox(const char * Title, const char * Message) {
     // Create connection to the X Server.
-    Display* dpy = XOpenDisplay(NULL);
+    Display* dpy = XDisplay;//XOpenDisplay(NULL);
     
     // Create window.
     Window   win = XCreateSimpleWindow(
@@ -48,7 +50,11 @@ LinuxMessageBox(const char * Title, const char * Message) {
             XDrawString(dpy, win, DefaultGC(dpy, 0), 30, 30, Message, strlen(Message));
         }
     }
+    
+    XUnmapWindow(dpy, win);
     XDestroyWindow(dpy, win);
+    
+    Assert(!"Errored");
 }
 
 
