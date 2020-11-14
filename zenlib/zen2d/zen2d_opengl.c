@@ -324,9 +324,10 @@ Zen2DPushLine(v2 Start, v2 End, v4 Colour) {
     Zen2DPushLineVertices(Start, End, Colour, Colour);
 }
 
+
 // TODO(Abi): Tint method for textures.
 internal void
-Zen2DPushTexture(v4 Destination, texture Texture, v4 Source){
+Zen2DPushTextureRect(v4 Destination, texture Texture, v4 Source){
     Assert(Texture.ID);
     
     if(!Zen2D->ActiveBatch || Zen2D->ActiveBatch->Type != ZEN2D_BATCH_TEXTURES || Zen2D->ActiveBatch->TexData.ID != Texture.ID) {
@@ -390,6 +391,11 @@ Zen2DPushTexture(v4 Destination, texture Texture, v4 Source){
     Zen2D->ActiveBatch->DataLength += Zen2D->Texture.Size;
 }
 
+
+internal void
+Zen2DPushTexture(texture Texture, v2 Position) {
+    Zen2DPushTextureRect(v4(Position.x, Position.y, Texture.Width, Texture.Height), Texture, v4(0, 0, Texture.Width, Texture.Height));
+}
 
 internal void
 Zen2DPushTextFontColourN(const char * String, u32 StringLength, font * Font, v2 StartPosition, f32 FontSize, v4 Colour) {
@@ -511,7 +517,7 @@ internal void
 Zen2DBeginFrame() {
     // NOTE(Abi): Semi temp stuff, will eventually use FBOs and things
     {
-        glClearColor(0.f, 0.f, 0.f, 1.f);
+        glClearColor(0.133f, 0.137f, 0.137f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT);
     }
     
@@ -582,7 +588,7 @@ Zen2DEndFrame() {
                 glBindVertexArray(0);
             } break;
             
-            default: Assert(0);
+            default: Assert("[Zen2D] Batch had an invalid type" == 0);
         }
     }
 }

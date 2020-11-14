@@ -24,6 +24,7 @@ struct platform {
     b8 AppShouldQuit;
     
     f64 TargetFPS;
+    f64 TotalTime;
     f32 Delta;
     
     b8 KeyDown[ZKEY_COUNT];
@@ -50,6 +51,7 @@ struct platform {
 #ifdef USE_OPENGL
     void * (*OpenGLLoadProcedure)(const char * Name);
 #endif
+    void * Zen2D;
 };
 
 global platform * Platform;
@@ -65,6 +67,11 @@ ZenPlatformBeginFrame(void) {
 internal void
 ZenPlatformEndFrame(void) {
     
+}
+
+internal b32
+ZenMouseJustDown(mouse_type Button) {
+    return Platform->MouseDown[Button] && !Platform->MouseWasDown[Button];
 }
 
 internal void

@@ -3,24 +3,23 @@
 
 // NOTE(Abi): Implementations
 #include "zenlib/zenlib.c"
-global font Arial;
+
 
 internal void
 AppInit() {
-    fprintf(stderr, "[App] Initialised\n");
-    Arial = Zen2DLoadFontFromFNTAndPNG("arial.fnt", "arial.png");
-    Zen2DSetDefaultFont(&Arial);
+    fprintf(stderr, "[App] Loaded");
 }
 
 internal void
 AppUpdate() {
-    
+    Zen2DPushRect(v4(100, 100, 100, 100), v4(1.f, 1.f, 1.f, 1.f));
 }
 
 
 internal void
 AppHotLoad() {
     fprintf(stderr, "[App] Hot Loaded\n");
+    Log("func: %p", glUseProgram);
 }
 
 internal void

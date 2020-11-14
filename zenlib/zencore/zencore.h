@@ -84,6 +84,9 @@ struct v4 {
 };
 #define v4(x, y, z, w) (v4){x, y, {{z, w}}}
 
+#define ExpandRect(rect, n) v4((rect).x + (n), (rect).y + (n), \
+(rect).Width - 2 * (n), (rect).Height - 2 * (n))
+
 // NOTE(Abi): Zencore headers
 #include "zencore_debug.h"
 

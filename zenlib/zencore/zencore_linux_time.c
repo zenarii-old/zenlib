@@ -54,4 +54,5 @@ LinuxTimerEndFrame(void) {
         EndTime = LinuxTimerGetTime();
     }
     GlobalPlatform.Delta = EndTime - LinuxTimer.LastFrame;
+    GlobalPlatform.TotalTime += GlobalPlatform.Delta;
 }

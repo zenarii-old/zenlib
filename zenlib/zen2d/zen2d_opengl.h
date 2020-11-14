@@ -93,6 +93,5 @@ u32 AllocPos; \
 };
 
 // NOTE(Abi): OpenGL Specific Shaders
-internal void Zen2DLoadAllOpenGLFunctions(void);
-
+internal void Zen2DOpenGLLoadAllFunctions(void);
 #endif //ZEN2D_OPENGL_H

@@ -39,7 +39,8 @@ internal void Zen2DPushRectVertices(v4 Rect, v4, v4, v4, v4);
 
 internal void Zen2DPushLineVertices(v2 Start, v2 End, v4 StartColour, v4 EndColour);
 internal void Zen2DPushLine(v2 Start, v2 End, v4 Colour);
-internal void Zen2DPushTexture(v4 Destination, texture Texture, v4 Source);
+internal void Zen2DPushTexture(texture Texture, v2 Position);
+internal void Zen2DPushTextureRect(v4 Destination, texture Texture, v4 Source);
 
 
 

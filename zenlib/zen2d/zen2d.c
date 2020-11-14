@@ -103,7 +103,6 @@ Zen2DLoadFontFromFNTAndPNG(const char * FNTPath, const char * PNGPath) {
                         while(FNTData[i] != ',') {++i;} ++i;
                         Value = GetIntFromString(FNTData + i);
                         Padding.w = Value;
-                        PrintV4(Padding);
                     }
                     else if(StringCompareCaseInsensitive("id", Name) && Value != 0) {
                         GlyphCount++;

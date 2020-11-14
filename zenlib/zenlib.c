@@ -3,6 +3,7 @@ ZENAPPFUNC ZEN_APPLICATION_STATIC_LOAD(StaticLoad) {
 #ifdef ZEN2D
     Zen2D = MemoryArenaAlloc(&Platform->PermenantArena, sizeof(*Zen2D));
     Zen2DInit(&Platform->PermenantArena);
+    Platform->Zen2D = Zen2D;
 #endif
     
     AppInit();
@@ -23,6 +24,11 @@ ZENAPPFUNC ZEN_APPLICATION_UPDATE(Update) {
 // TODO(Abi): Fix hotloading seg faults
 ZENAPPFUNC ZEN_APPLICATION_HOT_LOAD(HotLoad) {
     Platform = Platform_;
+    
+#ifdef ZEN2D
+    Zen2D = Platform->Zen2D;
+    Zen2DOpenGLLoadAllFunctions();
+#endif
     
     AppHotLoad();
 }
