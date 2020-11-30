@@ -15,7 +15,6 @@ void main() {
 }
 
 @fragment
-//the smaller the text the higher the edge value desired
 #version 330 core
 
 uniform sampler2D Texture;
@@ -23,8 +22,10 @@ in vec4 fColour;
 in vec2 fTexCoords;
 
 out vec4 FragColour;
-const float Width = 0.48;
-const float Edge = 0.12;
+//the smaller the text the higher the edge value desired
+//TODO(Abi) Once i have a UI edit these values
+const float Width = 0.32;
+const float Edge = 0.34;
 
 void main() {
 	float Distance = 1.0 - texture(Texture, fTexCoords).a;

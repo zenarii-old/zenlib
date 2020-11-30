@@ -232,6 +232,7 @@ Zen2D->name.AllocPos = 0; \
         
         glBindVertexArray(0);
     }
+    
 }
 
 internal void
@@ -397,7 +398,7 @@ Zen2DPushTexture(texture Texture, v2 Position) {
     Zen2DPushTextureRect(v4(Position.x, Position.y, Texture.Width, Texture.Height), Texture, v4(0, 0, Texture.Width, Texture.Height));
 }
 
-internal void
+internal v2
 Zen2DPushTextFontColourN(const char * String, u32 StringLength, font * Font, v2 StartPosition, f32 FontSize, v4 Colour) {
     Assert(Zen2DIsFontValid(Font));
     
@@ -425,7 +426,7 @@ Zen2DPushTextFontColourN(const char * String, u32 StringLength, font * Font, v2 
         font_glyph Glyph = Font->Glyphs[String[i] - Font->LowestChar];
         
         v4 Destination = v4(Cursor.x + (Glyph.XOffset * FontScale),
-                            Cursor.y + Font->Base * FontScale -  ((Glyph.YOffset + Glyph.Height) * FontScale),
+                            Cursor.y + (Font->Base + 1) * FontScale -  ((Glyph.YOffset + Glyph.Height) * FontScale),
                             Glyph.Width * FontScale,
                             Glyph.Height * FontScale);
         
@@ -490,27 +491,30 @@ Zen2DPushTextFontColourN(const char * String, u32 StringLength, font * Font, v2 
         Zen2D->ActiveBatch->DataLength += Zen2D->Texture.Size;
         Cursor.x += Glyph.XAdvance * FontScale;
     }
+    
+    return Cursor;
 }
 
-internal void
+internal v2
 Zen2DPushTextFontN(const char * Text, u32 Length, font * Font, v2 Position, f32 Size) {
     v4 Colour = v4(1.f, 1.f, 1.f, 1.f);
-    Zen2DPushTextFontColourN(Text, Length, Font, Position, Size, Colour);
+    return Zen2DPushTextFontColourN(Text, Length, Font, Position, Size, Colour);
 }
 
-internal void
-Zen2DPushTextFont(const char * Text, font * Font, v2 Position, f32 Size) {
-    Zen2DPushTextFontN(Text, strlen(Text), Font, Position, Size);
-}
-
-internal void
+internal v2
 Zen2DPushTextN(const char * Text, u32 Length, v2 Position, f32 Size) {
-    Zen2DPushTextFontN(Text, Length, Zen2D->DefaultFont, Position, Size);
+    return Zen2DPushTextFontN(Text, Length, Zen2D->DefaultFont, Position, Size);
 }
 
-internal void
+internal v2
 Zen2DPushText(const char * Text, v2 Position, f32 Size) {
-    Zen2DPushTextFont(Text, Zen2D->DefaultFont, Position, Size);
+    return Zen2DPushTextFontN(Text, StringLength(Text), Zen2D->DefaultFont, Position, Size);
+}
+
+
+internal void
+Zen2DPushTextInBox(char * String, f32 Size, v4 Box) {
+    
 }
 
 internal void

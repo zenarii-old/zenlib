@@ -45,6 +45,8 @@ Zen2DLoadFontFromFNTAndPNG(const char * FNTPath, const char * PNGPath) {
     };
     enum font_read_type ReadType = READ_NONE;
     
+    i32 LineNum = 0;
+    
     for(i32 i = 0; FNTData[i];) {
         if(FNTData[i] == '#') {
             Commented = 1;
@@ -61,6 +63,7 @@ Zen2DLoadFontFromFNTAndPNG(const char * FNTPath, const char * PNGPath) {
                 case READ_NONE: {
                     if(FNTData[i] == '\n') {
                         CurrentGlyph = 0;
+                        LineNum++;
                     }
                     
                     if(CharacterIsDigit(FNTData[i]) || FNTData[i] == '-') {
@@ -152,6 +155,7 @@ Zen2DLoadFontFromFNTAndPNG(const char * FNTPath, const char * PNGPath) {
         }
         
     }
+    Log("%d, %d", LowestCharValue, GlyphCount);
     font Font = Zen2DLoadFont(PNGData, Width, Height, Channels, Glyphs + LowestCharValue, 
                               GlyphCount, LineHeight, FontSize, Base, LowestCharValue);
     

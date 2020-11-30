@@ -6,6 +6,7 @@ DebugLog(i32 Type, const char * File, i32 Line, const char * Message, ...) {
     fprintf(stderr, "(%s:%d) ", File, Line);
     vfprintf(stderr, Message, Args);
     fprintf(stderr, "\n");
+    
     va_end(Args);
     // TODO(Abi): Will need to use OutputStringA or smt on windows
 }
