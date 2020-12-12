@@ -154,7 +154,7 @@ Zen2DLoadFontFromFNTAndPNG(const char * FNTPath, const char * PNGPath) {
         }
         
     }
-    Log("%d, %d", LowestCharValue, GlyphCount);
+    
     font Font = Zen2DLoadFont(PNGData, Width, Height, Channels, Glyphs + LowestCharValue, 
                               GlyphCount, LineHeight, FontSize, Base, LowestCharValue);
     

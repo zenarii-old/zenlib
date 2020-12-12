@@ -72,6 +72,20 @@ enum zen2d_shader_type {
     ZEN2D_SHADER_COUNT
 };
 
+enum zen2d_fbo_type {
+    ZEN2D_FBO_MAIN,
+    ZEN2D_FBO_EFFECTS,
+    
+    ZEN2D_FBO_COUNT
+};
+
+typedef struct zen2d_fbo zen2d_fbo;
+struct zen2d_fbo {
+    GLuint ID;
+    GLuint Texture;
+    GLuint Depth;
+    GLint Width, Height;
+};
 
 struct zen2d {
     ZEN2D_COMMON;
@@ -90,8 +104,10 @@ unsigned char * Memory; \
 u32 AllocPos; \
 } name; 
 #include "zen2d_batch_data_types.inc"
+    
+    zen2d_fbo Framebuffer[ZEN2D_FBO_COUNT];
 };
 
-// NOTE(Abi): OpenGL Specific Shaders
+// NOTE(Abi): OpenGL Specific Functions
 internal void Zen2DOpenGLLoadAllFunctions(void);
 #endif //ZEN2D_OPENGL_H

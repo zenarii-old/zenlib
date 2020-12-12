@@ -169,6 +169,14 @@ int main(int argc, char ** argv) {
                                 &_SetWindowAttributes);
         LinuxRendererFinalise();
         
+        // NOTE(Abi): Force an expose event to set ScreenWidth/Height
+        {
+            XEvent ExposeEvent = {0};
+            ExposeEvent.type   = Expose;
+            LinuxProcessEvent(ExposeEvent);
+            Assert((GlobalPlatform.ScreenWidth > 0) && (GlobalPlatform.ScreenHeight > 0));
+        }
+        
         XStoreName(XDisplay, XWindow, WINDOW_TITLE);
         
         XSelectInput(XDisplay, XWindow,
