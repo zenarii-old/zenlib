@@ -15,9 +15,6 @@ struct font_glyph {
     i16 XOffset;
     i16 YOffset;
     i16 XAdvance;
-#if 1
-    char ID;
-#endif
 };
 
 global zen2d * Zen2D;

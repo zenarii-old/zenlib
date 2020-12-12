@@ -110,7 +110,6 @@ Zen2DLoadFontFromFNTAndPNG(const char * FNTPath, const char * PNGPath) {
                     else if(StringCompareCaseInsensitive("id", Name) && Value != 0) {
                         GlyphCount++;
                         CurrentGlyph = &Glyphs[Value];
-                        CurrentGlyph->ID = Value;
                         if(Value < LowestCharValue) LowestCharValue = Value;
                     }
                     else if(StringCompareCaseInsensitive("xadvance", Name)) {
