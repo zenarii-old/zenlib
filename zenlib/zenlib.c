@@ -7,15 +7,29 @@ ZENAPPFUNC ZEN_APPLICATION_STATIC_LOAD(StaticLoad) {
     Platform->Zen2D = Zen2D;
 #endif
     
-    AppInit();
+#ifdef ZEN3D
+    Zen3D = MemoryArenaAlloc(&Platform->PermenantArena, sizeof(*Zen2D));
+    Zen3DInit(&Platform->PermenantArena);
+    Platform->Zen3D = Zen3D;
+#endif
     
+    AppInit();
 }
 
 ZENAPPFUNC ZEN_APPLICATION_UPDATE(Update) {
 #ifdef ZEN2D
     Zen2DBeginFrame();
 #endif
+    
+#ifdef ZEN3D
+    
+#endif
+    
     AppUpdate();
+    
+#ifdef ZEN3D
+    
+#endif
     
 #ifdef ZEN2D
     Zen2DEndFrame();
@@ -40,4 +54,8 @@ ZENAPPFUNC ZEN_APPLICATION_HOT_UNLOAD(HotUnload) {
 
 #ifdef ZEN2D
 #include "zen2d/zen2d.c"
+#endif
+
+#ifdef ZEN3D
+#include "zen3d/zen3d.c"
 #endif

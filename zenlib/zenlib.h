@@ -7,8 +7,8 @@
 #include "zen2d/zen2d.h"
 #endif
 
-#ifndef USE_OPENGL
-#define USE_OPENGL 1
+#ifdef ZEN3D
+#include "zen3d/zen3d.h"
 #endif
 
 internal void AppInit(void);
