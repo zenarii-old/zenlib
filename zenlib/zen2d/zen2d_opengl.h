@@ -68,6 +68,7 @@ enum zen2d_shader_type {
     ZEN2D_SHADER_LINES,
     ZEN2D_SHADER_TEXTURES,
     ZEN2D_SHADER_TEXT,
+    ZEN2D_SHADER_FBO_BLIT,
     
     ZEN2D_SHADER_COUNT
 };
@@ -104,6 +105,11 @@ unsigned char * Memory; \
 u32 AllocPos; \
 } name; 
 #include "zen2d_batch_data_types.inc"
+    
+    struct {
+        GLuint VAO, VBO;
+        
+    } FramebufferBlit;
     
     zen2d_fbo Framebuffer[ZEN2D_FBO_COUNT];
 };

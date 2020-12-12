@@ -150,7 +150,7 @@ Zen2DCreateFramebuffer(GLint Width, GLint Height) {
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Width, Height, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Width, Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
     }
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Texture, 0);
     
@@ -201,7 +201,7 @@ Zen2DInit(memory_arena * Arena) {
     Zen2DOpenGLLoadAllFunctions();
     
     glEnable(GL_BLEND);
-    glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    
     
     glGenVertexArrays(1, &Zen2D->GeneralVAO);
     
@@ -287,6 +287,31 @@ Zen2D->name.AllocPos = 0; \
         Zen2DOpenGLAddFloatAttribute(2, 2, 8, 6);
         
         glBindVertexArray(0);
+    }
+    
+    // NOTE(Abi): Framebuffer Blit Data
+    {
+        f32 Vertices[] = {
+            -1.f, -1.f, 0.f, 0.f,
+            -1.f,  1.f, 0.f, 1.f,
+            1.f,  -1.f, 1.f, 0.f,
+            
+            -1.f,  1.f, 0.f, 1.f,
+            1.f,  -1.f, 1.f, 0.f,
+            1.f,   1.f, 1.f, 1.f,
+        };
+        
+        glGenVertexArrays(1, &Zen2D->FramebufferBlit.VAO);
+        glBindVertexArray(Zen2D->FramebufferBlit.VAO);
+        
+        glGenBuffers(1, &Zen2D->FramebufferBlit.VBO);
+        glBindBuffer(GL_ARRAY_BUFFER, Zen2D->FramebufferBlit.VBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_STATIC_DRAW);
+        
+        // NOTE(Abi): Position Data
+        Zen2DOpenGLAddFloatAttribute(0, 2, 4, 0);
+        // NOTE(Abi): UV Data
+        Zen2DOpenGLAddFloatAttribute(1, 2, 4, 2);
     }
     
     // NOTE(Abi): Load FBOs
@@ -609,6 +634,8 @@ Zen2DEndFrame() {
         switch(Batch->Type) {
             case ZEN2D_BATCH_RECTS: {
                 Zen2DBindFramebuffer(&Zen2D->Framebuffer[ZEN2D_FBO_MAIN]);
+                glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                
                 glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_RECTANGLES]);
                 glBindVertexArray(Zen2D->Rect.VAO);
                 {
@@ -623,6 +650,8 @@ Zen2DEndFrame() {
             
             case ZEN2D_BATCH_LINES: {
                 Zen2DBindFramebuffer(&Zen2D->Framebuffer[ZEN2D_FBO_MAIN]);
+                glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                
                 glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_LINES]);
                 glBindVertexArray(Zen2D->Line.VAO);
                 {
@@ -637,6 +666,8 @@ Zen2DEndFrame() {
             
             case ZEN2D_BATCH_TEXTURES: {
                 Zen2DBindFramebuffer(&Zen2D->Framebuffer[ZEN2D_FBO_MAIN]);
+                glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                
                 glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_TEXTURES]);
                 glBindVertexArray(Zen2D->Texture.VAO);
                 {
@@ -652,6 +683,8 @@ Zen2DEndFrame() {
             
             case ZEN2D_BATCH_TEXT: {
                 Zen2DBindFramebuffer(&Zen2D->Framebuffer[ZEN2D_FBO_MAIN]);
+                glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+                
                 glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_TEXT]);
                 glBindVertexArray(Zen2D->Text.VAO);
                 {
@@ -668,4 +701,14 @@ Zen2DEndFrame() {
             default: Assert("[Zen2D] Batch had an invalid type" == 0);
         }
     }
+    
+    // NOTE(Abi) Copy main framebuffer to the default one.
+    // ugh
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_FBO_BLIT]);
+    glBindTexture(GL_TEXTURE_2D, Zen2D->Framebuffer[ZEN2D_FBO_MAIN].Texture);
+    glBindVertexArray(Zen2D->FramebufferBlit.VAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(0);
 }
