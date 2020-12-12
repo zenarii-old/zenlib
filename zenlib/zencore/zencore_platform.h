@@ -19,8 +19,11 @@ enum mouse_type {
     MOUSE_BUTTON_COUNT
 };
 
+typedef struct core core;
+
 typedef struct platform platform;
 struct platform {
+    core * Core;
     b8 AppShouldQuit;
     
     f64 TargetFPS;
