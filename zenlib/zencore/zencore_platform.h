@@ -55,6 +55,7 @@ struct platform {
     void * (*OpenGLLoadProcedure)(const char * Name);
 #endif
     void * Zen2D;
+    void * Zen3D;
 };
 
 global platform * Platform;
@@ -73,8 +74,23 @@ ZenPlatformEndFrame(void) {
 }
 
 internal b32
+ZenMouseDown(mouse_type Button) {
+    return Platform->MouseDown[Button];
+}
+
+internal b32
 ZenMouseJustDown(mouse_type Button) {
     return Platform->MouseDown[Button] && !Platform->MouseWasDown[Button];
+}
+
+internal b32
+ZenKeyDown(key_type Key) {
+    return Platform->KeyDown[Key];
+}
+
+internal b32
+ZenKeyJustDown(key_type Key) {
+    return Platform->KeyDown[Key] && !Platform->KeyWasDown[Key];
 }
 
 internal void
