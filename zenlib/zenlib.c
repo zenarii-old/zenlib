@@ -22,13 +22,13 @@ ZENAPPFUNC ZEN_APPLICATION_UPDATE(Update) {
 #endif
     
 #ifdef ZEN3D
-    
+    Zen3DBeginFrame();
 #endif
     
     AppUpdate();
     
 #ifdef ZEN3D
-    
+    Zen3DEndFrame();
 #endif
     
 #ifdef ZEN2D
@@ -36,13 +36,19 @@ ZENAPPFUNC ZEN_APPLICATION_UPDATE(Update) {
 #endif
 }
 
-// TODO(Abi): Fix hotloading seg faults
 ZENAPPFUNC ZEN_APPLICATION_HOT_LOAD(HotLoad) {
     Platform = Platform_;
     
+#ifdef USE_OPENGL
+    Zen2DOpenGLLoadAllFunctions();
+#endif
+    
 #ifdef ZEN2D
     Zen2D = Platform->Zen2D;
-    Zen2DOpenGLLoadAllFunctions();
+#endif
+    
+#ifdef ZEN3D
+    Zen3D = Platform->Zen3D;
 #endif
     
     AppHotLoad();

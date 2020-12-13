@@ -658,6 +658,7 @@ Zen2DBeginFrame() {
         glClear(GL_COLOR_BUFFER_BIT);
     }
     
+    // NOTE(Abi): Reset the memory from the previous frame
 #define ZEN2DBATCH(name, ...) Zen2D->name.AllocPos = 0;
 #include "zen2d_batch_data_types.inc"
     Zen2D->BatchesCount = 0;

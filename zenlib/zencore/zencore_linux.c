@@ -1,4 +1,3 @@
-// TODO(Abi): sort out the batching system for the zen2d system
 // NOTE(Abi): Linux Headers
 #include <unistd.h>
 #include <X11/Xlib.h>
@@ -42,11 +41,6 @@ global platform GlobalPlatform;
 internal void
 LinuxProcessEvent(XEvent Event) {
     switch(Event.type) {
-        /* TODO
-        case ConfigureNotify: {
-            // NOTE(Abi): This is a resize event
-        } break;
-*/
         case Expose: {
             XWindowAttributes attribs;
             XGetWindowAttributes(XDisplay, XWindow, &attribs);
@@ -134,12 +128,6 @@ LinuxProcessEvent(XEvent Event) {
         
     }
 }
-
-// TODO(Abi): 
-// DLL loading [~]
-// Memory Arena for big fixed size arenas,
-// Zen2d
-// Mouse stuff
 
 int main(int argc, char ** argv) {
     XDisplay = XOpenDisplay(0);

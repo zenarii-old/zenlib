@@ -70,7 +70,6 @@ LinuxAppCodeBeginFrame(linux_app_code * AppCode) {
         
         dlclose(AppCode->Handle);
         *AppCode = (linux_app_code){0};
-        // TODO(Abi): need to wait until the compiler has finished compiling sandbox.so
         LinuxTimerSleep(1000);
         LinuxAppCodeLoad(AppCode);
         

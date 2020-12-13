@@ -1,7 +1,6 @@
 #ifndef ZENCORE_LINUX_DEBUG_H
 #define ZENCORE_LINUX_DEBUG_H
 
-// TODO(Abi): define these
 #define HardAssert(expr) if(!(expr)) { FailedAssert(__FILE__, __LINE__, #expr, 1); }
 #define SoftAssert(expr) if(!(expr)) { FailedAssert(__FILE__, __LINE__, #expr, 0); }
 #define Assert HardAssert

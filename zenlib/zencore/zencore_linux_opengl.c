@@ -14,7 +14,7 @@ LinuxRendererInit(void) {
     Colormap _Colourmap = XCreateColormap(XDisplay, DefaultRootWindow(XDisplay), _Visual->visual, AllocNone);
     
     _SetWindowAttributes.colormap = _Colourmap;
-    //TODO(Zen): Check if need more, since in ZCreateWindow using more in the XSelectInput
+    
     _SetWindowAttributes.event_mask = ExposureMask | KeyPressMask;
     
     GLContext = glXCreateContext(XDisplay, _Visual, 0, GL_TRUE);

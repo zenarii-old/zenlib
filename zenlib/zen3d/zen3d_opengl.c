@@ -1,6 +1,7 @@
-
 internal u32
 Zen3DOpenGLLoadShader(const char * Name, const char * VertexSource, const char * FragmentSource) {
+    
+    
     u32 Shader = 0;
     b32 SuccessfulCompilation = 0;
     char InfoLog[512] = {0};
@@ -49,25 +50,7 @@ Zen3DOpenGLLoadShader(const char * Name, const char * VertexSource, const char *
 
 internal void
 Zen3DInit(memory_arena * Arena) {
-    char * VSource, * FSource;
-    VSource = 
-        "#version 330 core\n"\
-        "layout(location = 0) in vec3 inPosition;\n"\
-        "layout(location = 1) in vec4 inColour;\n"\
-        "out vec4 fColour;\n"\
-        "void main() {\n"\
-        "gl_Position = vec4(inPosition, 1.0);\n"\
-        "fColour = inColour;\n"\
-        "}";
-    FSource = 
-        "#version 330 core\n"\
-        "in vec4 fColour;\n"\
-        "out vec4 FragColour;\n"\
-        "void main() {\n"\
-        "FragColour = fColour;\n"\
-        "}";
-    
-    Zen3D->Shader = Zen3DOpenGLLoadShader("Test", VSource, FSource);
+    //glClear();
 }
 
 internal void
@@ -78,8 +61,8 @@ Zen3DBeginFrame() {
 internal void
 Zen3DEndFrame() {
     glEnable(GL_DEPTH);
-    // TODO(Abi): Clear the framebuffer dpeth/colour stuff
-    
+    glClearColor(0.f, 0.f, 0.f, 0.f);
+    //BIND FRAMEBUFFER,
     
     glDisable(GL_DEPTH);
 }

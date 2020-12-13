@@ -48,7 +48,7 @@ struct platform {
     
     // NOTE(Abi): Function pointers
     void   (*Error)(const char * Title, const char * Message);
-    char * (*LoadFile)(const char * Path);
+    char * (*LoadFile)(const char * Path, b32 Temporary);
     void * (*HeapAlloc)(u32 Size);
     void   (*HeapFree)(void * Memory, u32 Size);
 #ifdef USE_OPENGL

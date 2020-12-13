@@ -22,7 +22,7 @@ Zen2DLoadTextureFromPNG(const char * Path, u32 Flags) {
 
 internal font
 Zen2DLoadFontFromFNTAndPNG(const char * FNTPath, const char * PNGPath) {
-    char * FNTData = Platform->LoadFile(FNTPath);
+    char * FNTData = Platform->LoadFile(FNTPath, 1);
     i32 Width, Height, Channels;
     void * PNGData = stbi_load(PNGPath, &Width, &Height, &Channels, 0);
     

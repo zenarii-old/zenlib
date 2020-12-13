@@ -1,5 +1,5 @@
 internal char * 
-LinuxLoadFile(const char * Path) {
+LinuxLoadFile(const char * Path, b32 Temporary) {
     FILE * File = fopen(Path, "r");
     if(File == 0) return 0;
     
@@ -8,8 +8,10 @@ LinuxLoadFile(const char * Path) {
     
     fseek(File, 0, SEEK_SET);
     
-    // TODO(Abi): Maybe use scratch arena?
-    char * Buffer = MemoryArenaAlloc(&GlobalPlatform.PermenantArena, sizeof(char) * BytesRead);
+    memory_arena * Arena = Temporary ? 
+        &GlobalPlatform.ScratchArena : &GlobalPlatform.PermenantArena;
+    
+    char * Buffer = MemoryArenaAlloc(Arena, sizeof(char) * BytesRead);
     if(Buffer == 0) return 0;
     
     fread(Buffer, sizeof(char), BytesRead, File);
