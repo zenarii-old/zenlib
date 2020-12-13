@@ -32,6 +32,10 @@ f32 RendererWidth; \
 f32 RendererHeight; \
 } 
 
+//
+// Drawing
+//
+
 internal void Zen2DPushRect(v4 Rect, v4 Colour);
 internal void Zen2DPushRectVertices(v4 Rect, v4, v4, v4, v4);
 
@@ -41,7 +45,11 @@ internal void Zen2DPushLine(v2 Start, v2 End, v4 Colour);
 internal void Zen2DPushTexture(texture Texture, v2 Position);
 internal void Zen2DPushTextureRect(v4 Destination, texture Texture, v4 Source);
 
+internal void Zen2DPushBlur(v4 Rect);
 
+//
+// Loading
+//
 
 internal font Zen2DLoadFontFromFNTAndPNG(const char * FNTPath, const char * PNGPath);
 internal font Zen2DLoadFont(void * PNGData, i32 Width, i32 Height, i32 Channels, font_glyph * Glyphs, u32 GlyphCount, u32 LineHeight, u32 FontSize, u32 Base, u32 LowestChar);

@@ -298,10 +298,7 @@ Zen2D->name.AllocPos = 0; \
         glBindBuffer(GL_ARRAY_BUFFER, Zen2D->Blur.VBO);
         glBufferData(GL_ARRAY_BUFFER, Zen2D->Blur.Max * Zen2D->Blur.Size, 0, GL_DYNAMIC_DRAW);
         // NOTE(Abi): Position Data
-        Zen2DOpenGLAddFloatAttribute(0, 2, 4, 0);
-        // NOTE(Abi): UV Data
-        Zen2DOpenGLAddFloatAttribute(1, 2, 4, 2); 
-        
+        Zen2DOpenGLAddFloatAttribute(0, 2, 2, 0);
         glBindVertexArray(0);
     }
     
@@ -387,6 +384,36 @@ Zen2DPushRectVertices(v4 Rect, v4 Colour00, v4 Colour01, v4 Colour10, v4 Colour1
 internal void
 Zen2DPushRect(v4 Rect, v4 Colour) {
     Zen2DPushRectVertices(Rect, Colour, Colour, Colour, Colour);
+}
+
+internal void
+Zen2DPushBlur(v4 Rect) {
+    if(!Zen2D->ActiveBatch || Zen2D->ActiveBatch->Type != ZEN2D_BATCH_BLUR) {
+        Zen2D->ActiveBatch = &Zen2D->Batches[Zen2D->BatchesCount++];
+        Zen2D->ActiveBatch->Type = ZEN2D_BATCH_BLUR;
+        Zen2D->ActiveBatch->Data = Zen2D->Blur.Memory + Zen2D->Blur.AllocPos;
+        Zen2D->ActiveBatch->DataLength = 0;
+    }
+    
+    // NOTE(Abi): Convert from the screen coordinates to opengl ones
+    {
+        Rect.x *= 2.f / Zen2D->RendererWidth;  Rect.x -= 1;
+        Rect.y *= 2.f / Zen2D->RendererHeight; Rect.y -= 1;
+        Rect.z *= 2.f / Zen2D->RendererWidth;  
+        Rect.w *= 2.f / Zen2D->RendererHeight; 
+    }
+    
+    GLubyte * Data = Zen2D->Blur.Memory + Zen2D->Blur.AllocPos;
+    {
+        ((v2 *)Data)[0]  = v2(Rect.x, Rect.y);
+        ((v2 *)Data)[1]  = v2(Rect.x + Rect.Width, Rect.y);
+        ((v2 *)Data)[2]  = v2(Rect.x, Rect.y + Rect.Height);
+        ((v2 *)Data)[3]  = v2(Rect.x + Rect.Width, Rect.y + Rect.Height);
+        ((v2 *)Data)[4] = v2(Rect.x + Rect.Width, Rect.y);
+        ((v2 *)Data)[5] = v2(Rect.x, Rect.y + Rect.Height);
+    }
+    Zen2D->Blur.AllocPos += Zen2D->Blur.Size;
+    Zen2D->ActiveBatch->DataLength += Zen2D->Blur.Size;
 }
 
 internal void
@@ -626,8 +653,8 @@ Zen2DBeginFrame() {
         glClearColor(0.f, 0.f, 0.f, 0.f);
         glClear(GL_COLOR_BUFFER_BIT);
         Zen2DBindFramebuffer(0);
-        // TEMP(Abi)
-        glClearColor(0.133f, 0.137f, 0.137f, 1.f);
+        // TODO(Abi): This will wipe the main framebuffer which zen3d writes too
+        glClearColor(0.0f, 0.0f, 0.0f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT);
     }
     

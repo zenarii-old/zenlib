@@ -19,6 +19,7 @@ enum zen2d_batch_type {
     ZEN2D_BATCH_LINES,
     ZEN2D_BATCH_TEXTURES,
     ZEN2D_BATCH_TEXT,
+    ZEN2D_BATCH_BLUR,
     
     ZEN2D_BATCH_COUNT
 };
@@ -28,7 +29,7 @@ struct zen2d_batch {
     zen2d_batch_type Type;
     void * Data;
     u32 DataLength;
-    // TODO(Abi): void * to font/text
+    // TODO(Abi): void * to font/text, since can then do assert(Is*Valid());
     union {
         struct {
             u32 ID;
@@ -69,6 +70,7 @@ enum zen2d_shader_type {
     ZEN2D_SHADER_TEXTURES,
     ZEN2D_SHADER_TEXT,
     ZEN2D_SHADER_FBO_BLIT,
+    ZEN2D_SHADER_BLUR,
     
     ZEN2D_SHADER_COUNT
 };
