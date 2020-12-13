@@ -7,20 +7,35 @@ LinuxMessageBox(const char * Title, const char * Message) {
     // Create connection to the X Server.
     Display* dpy = XDisplay;//XOpenDisplay(NULL);
     
-    // Create window.
-    Window   win = XCreateSimpleWindow(
-                                       dpy,
-                                       DefaultRootWindow(dpy), // Parent
-                                       0, 0,                   // X/Y, often overridden by window manager
-                                       400, 100,               // Width/Height
-                                       0, 0,                   // Border
-                                       WhitePixel(dpy, 0)      // Background
-                                       );
     
-    // Set window title.
+#define MSG_BOX_MAX_LINES 128
+#define MAX_CHARACTERS_PER_LINE 64
+    char * Text[MSG_BOX_MAX_LINES] = {0};
+    i32 Line = 0;
+    // NOTE(Abi): string preprocess, don't need to free strings as program immediately exits
+    // TODO(Abi): may work badly with newlines
+    for(i32 idx = 0; (idx < StringLength(Message)) && (Line < MSG_BOX_MAX_LINES); ++Line) {
+        if(idx + MAX_CHARACTERS_PER_LINE > StringLength(Message)) {
+            Text[Line] = strndup(Message + idx, StringLength(Message) - idx);
+            Log("%s", Text[Line]);
+            break;
+        }
+        i32 End = idx + MAX_CHARACTERS_PER_LINE;
+        while(Message[End] != ' ') { End--; };
+        Text[Line] = strndup(Message + idx, (End - idx));
+        idx = End + 1;
+        Log("%s", Text[Line]);
+    }
+    
+    Window   win = XCreateSimpleWindow(dpy,
+                                       DefaultRootWindow(dpy),
+                                       0, 0,                  
+                                       435, 50 + Line * 16,              
+                                       0, 0,                  
+                                       WhitePixel(dpy, 0));
+    
     XStoreName(dpy, win, Title);
     
-    // Choose which events we want.
     XSelectInput(dpy, win,
                  SubstructureNotifyMask // Window size changes (ConfigureNotify)
                  | ExposureMask         // Window needs to be repainted (Expose)
@@ -29,7 +44,6 @@ LinuxMessageBox(const char * Title, const char * Message) {
                  | ButtonReleaseMask
                  | KeyPressMask);
     
-    // Make window visible and give it focus.
     XMapRaised(dpy, win);
     
     // For window manager close button event.
@@ -47,7 +61,9 @@ LinuxMessageBox(const char * Title, const char * Message) {
         
         // Expose event tells us to repaint (some of) the window.
         if (ev.type == Expose) {
-            XDrawString(dpy, win, DefaultGC(dpy, 0), 30, 30, Message, strlen(Message));
+            for(i32 i = 0; i <= Line; ++i) {
+                XDrawString(dpy, win, DefaultGC(dpy, 0), 30, 30 + (i * 16), Text[i], strlen(Text[i]));
+            }
         }
     }
     
