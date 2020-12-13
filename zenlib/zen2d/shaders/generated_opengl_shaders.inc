@@ -137,4 +137,29 @@ zen2d_shader_info ShaderInfo[] = {
 		"    FragColour = texture(ScreenTexture, fTextureCoords);\n" \
 		"}\n"
 	},
+	{
+		"blur",
+		"#version 330 core\n" \
+		"\n" \
+		"layout(location = 0) in vec2 inPosition;\n" \
+		"layout(location = 1) in vec2 inTextureCoords;\n" \
+		"\n" \
+		"out vec2 fTextureCoords;\n" \
+		"\n" \
+		"void main() {\n" \
+		"    gl_Position = vec4(inPosition.x, inPosition.y, 0.0, 1.0);\n" \
+		"    fTextureCoords = inTextureCoords;\n" \
+		"}\n" \
+		"\n",
+		"#version 330 core\n" \
+		"\n" \
+		"in vec2 fTextureCoords;\n" \
+		"uniform sampler2D ScreenTexture;\n" \
+		"\n" \
+		"out vec4 FragColour;\n" \
+		"\n" \
+		"void main() {\n" \
+		"    FragColour = texture(ScreenTexture, fTextureCoords);\n" \
+		"}\n"
+	},
 };

@@ -289,6 +289,22 @@ Zen2D->name.AllocPos = 0; \
         glBindVertexArray(0);
     }
     
+    // NOTE(Abi): Blur Data
+    {
+        glGenVertexArrays(1, &Zen2D->Blur.VAO);
+        glBindVertexArray(Zen2D->Blur.VAO);
+        
+        glGenBuffers(1, &Zen2D->Blur.VBO);
+        glBindBuffer(GL_ARRAY_BUFFER, Zen2D->Blur.VBO);
+        glBufferData(GL_ARRAY_BUFFER, Zen2D->Blur.Max * Zen2D->Blur.Size, 0, GL_DYNAMIC_DRAW);
+        // NOTE(Abi): Position Data
+        Zen2DOpenGLAddFloatAttribute(0, 2, 4, 0);
+        // NOTE(Abi): UV Data
+        Zen2DOpenGLAddFloatAttribute(1, 2, 4, 2); 
+        
+        glBindVertexArray(0);
+    }
+    
     // NOTE(Abi): Framebuffer Blit Data
     {
         f32 Vertices[] = {
@@ -629,6 +645,9 @@ Zen2DBeginFrame() {
 
 internal void
 Zen2DEndFrame() {
+    // TODO(Abi): Maybe push the final 3D framebuffer to the main 2D framebuffer? May be depth issues, not an issue right now tho.
+    // IDEA(Abi): could always have MAIN framebuffer bound, and only reset at the end of the blur/other effects?
+    glDisable(GL_DEPTH);
     for(i32 i = 0; i < Zen2D->BatchesCount; ++i) {
         zen2d_batch * Batch = &Zen2D->Batches[i];
         switch(Batch->Type) {
@@ -645,7 +664,6 @@ Zen2DEndFrame() {
                     glDrawArrays(GL_TRIANGLES, 0, Count);
                 }
                 glBindVertexArray(0);
-                Zen2DBindFramebuffer(0);
             } break;
             
             case ZEN2D_BATCH_LINES: {
@@ -661,7 +679,6 @@ Zen2DEndFrame() {
                     glDrawArrays(GL_LINES, 0, Count);
                 }
                 glBindVertexArray(0);
-                Zen2DBindFramebuffer(0);
             } break;
             
             case ZEN2D_BATCH_TEXTURES: {
@@ -678,7 +695,6 @@ Zen2DEndFrame() {
                     glDrawArrays(GL_TRIANGLES, 0, Count);
                 }
                 glBindVertexArray(0);
-                Zen2DBindFramebuffer(0);
             } break;
             
             case ZEN2D_BATCH_TEXT: {
@@ -695,7 +711,34 @@ Zen2DEndFrame() {
                     glDrawArrays(GL_TRIANGLES, 0, Count);
                 }
                 glBindVertexArray(0);
-                Zen2DBindFramebuffer(0);
+                
+            } break;
+            
+            case ZEN2D_BATCH_BLUR: {
+                Zen2DBindFramebuffer(&Zen2D->Framebuffer[ZEN2D_FBO_EFFECTS]);
+                // TODO(Abi): Maybe only set once and never change?
+                glClearColor(0.f, 0.f, 0.f, 0.f); 
+                glClear(GL_COLOR_BUFFER_BIT);
+                glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_BLUR]);
+                // NOTE(Abi): Don't have to worry about blend func here as blur texture has opacity of 1.0
+                glBindVertexArray(Zen2D->Blur.VAO);
+                {
+                    glBindTexture(GL_TEXTURE_2D, Zen2D->Framebuffer[ZEN2D_FBO_MAIN].Texture);
+                    glBindBuffer(GL_ARRAY_BUFFER, Zen2D->Blur.VBO);
+                    glBufferSubData(GL_ARRAY_BUFFER, 0, Batch->DataLength, Batch->Data);
+                    i32 Count = Batch->DataLength/Zen2D->Blur.Stride;
+                    glDrawArrays(GL_TRIANGLES, 0, Count);
+                }
+                
+                // NOTE(Abi): Draw back onto the main framebuffer
+                Zen2DBindFramebuffer(&Zen2D->Framebuffer[ZEN2D_FBO_MAIN]);
+                glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_FBO_BLIT]);
+                glBindVertexArray(Zen2D->FramebufferBlit.VAO);
+                {
+                    glBindTexture(GL_TEXTURE_2D, Zen2D->Framebuffer[ZEN2D_FBO_EFFECTS].Texture);
+                    glDrawArrays(GL_TRIANGLES, 0, 6);
+                }
+                glBindVertexArray(0);
             } break;
             
             default: Assert("[Zen2D] Batch had an invalid type" == 0);
