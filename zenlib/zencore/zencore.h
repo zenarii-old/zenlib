@@ -89,10 +89,11 @@ struct v4 {
 
 // NOTE(Abi): Zencore headers
 #include "zencore_debug.h"
+#include "zencore_memory.h"
+#include "zencore_platform.h"
 
 #include "zencore_debug.c"
 #include "zencore_memory.c"
-#include "zencore_platform.h"
 #include "zencore_maths.c"
 #include "zencore_strings.c"
 

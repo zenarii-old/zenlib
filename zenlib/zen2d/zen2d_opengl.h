@@ -110,7 +110,6 @@ u32 AllocPos; \
     
     struct {
         GLuint VAO, VBO;
-        
     } FramebufferBlit;
     
     zen2d_fbo Framebuffer[ZEN2D_FBO_COUNT];

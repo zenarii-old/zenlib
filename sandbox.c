@@ -23,8 +23,8 @@ AppUpdate() {
     
     Zen2DPushBlur(v4(90, 90, 90, 90));
     
-    
     if(ZenKeyDown(ZKEY_ESCAPE)) ZenPlatformQuit();
+    
 }
 
 internal void

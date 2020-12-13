@@ -1,19 +1,3 @@
-#define MemorySet memset
-#define MemoryCopy memcpy
-
-#ifndef DEFAULT_ALIGNMENT
-#define DEFAULT_ALIGNMENT (2 * sizeof(void*))
-#endif
-
-// NOTE(Abi) A fixed sized memory arena.
-typedef struct memory_arena memory_arena;
-struct memory_arena {
-    size_t Offset;
-    unsigned char * Memory;
-    size_t MemorySize;
-    size_t MemoryLeft;
-};
-
 internal memory_arena
 MemoryArenaInit(unsigned char * Memory, size_t MemorySize) {
     memory_arena Arena = {0};
@@ -73,17 +57,24 @@ MemoryArenaClear(memory_arena * Arena) {
     Arena->MemoryLeft = Arena->MemorySize;
 }
 
-// TODO(Abi): Test this
+// TODO(Abi): This crashes
+/*
 internal char *
 MemoryArenaAllocStringf(memory_arena * Arena, char * Format, ...) {
+    
+    
     va_list Args;
     va_start(Args, Format);
-    
+    Log("x");
     u32 Length = vprintf(Format, Args);
-    char * Result = MemoryArenaAlloc(Arena, (Length + 1) * sizeof(char));
+    Log("%d", Length);
+    char * Result = MemoryArenaAlloc(Arena, (Length + 1));
+    Lo
+        Log("x");
     vsprintf(Result, Format, Args);
-    
+    Log("x");
     va_end(Args);
-    
+    Log("x");
     return Result;
 }
+*/

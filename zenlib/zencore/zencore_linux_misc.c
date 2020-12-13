@@ -17,14 +17,12 @@ LinuxMessageBox(const char * Title, const char * Message) {
     for(i32 idx = 0; (idx < StringLength(Message)) && (Line < MSG_BOX_MAX_LINES); ++Line) {
         if(idx + MAX_CHARACTERS_PER_LINE > StringLength(Message)) {
             Text[Line] = strndup(Message + idx, StringLength(Message) - idx);
-            Log("%s", Text[Line]);
             break;
         }
         i32 End = idx + MAX_CHARACTERS_PER_LINE;
         while(Message[End] != ' ') { End--; };
         Text[Line] = strndup(Message + idx, (End - idx));
         idx = End + 1;
-        Log("%s", Text[Line]);
     }
     
     Window   win = XCreateSimpleWindow(dpy,
@@ -69,14 +67,13 @@ LinuxMessageBox(const char * Title, const char * Message) {
     
     XUnmapWindow(dpy, win);
     XDestroyWindow(dpy, win);
-    
-    Assert(!"Errored");
 }
 
 
 internal void
 LinuxError(const char * Title, const char * Message) {
-    fprintf(stderr, "%s: %s\n", Title, Message);
+    // TODO(Abi): Not completely happy with this being commented out
+    //fprintf(stderr, "%s: %s\n", Title, Message);
     LinuxMessageBox(Title, Message);
 }
 

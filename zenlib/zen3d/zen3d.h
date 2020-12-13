@@ -15,14 +15,6 @@ internal void Zen3DEndFrame();
 
 internal void Zen3DPushQuad(v3 p0, v3 p1, v3 p2, v3 p3);
 
-/*
-typedef struct camera3D camera3D;
-struct camera3D {
-    v3 Position;
-    matrix4x4 View;
-};
-*/
-
 #ifdef USE_OPENGL
 #include "zen3d_opengl.h"
 #endif

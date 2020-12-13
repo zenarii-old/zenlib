@@ -49,8 +49,41 @@ Zen3DOpenGLLoadShader(const char * Name, const char * VertexSource, const char *
 }
 
 internal void
+Zen3DOpenGLAddFloatAttribute(i32 ID, u32 Count, u32 Stride, u32 Offset) {
+    glVertexAttribPointer(ID, Count, GL_FLOAT, GL_FALSE, Stride * sizeof(f32), (void *)(Offset*sizeof(f32)));
+    glEnableVertexAttribArray(ID);
+}
+
+internal void
+Zen3DPushQuad(v3 p0, v3 p1, v3 p2, v3 p3) {
+    
+}
+
+internal void
 Zen3DInit(memory_arena * Arena) {
-    //glClear();
+#ifndef ZEN2D
+    // TODO(Abi): Load opengl functions
+#endif
+    
+    Zen3D->Shapes.Stride = sizeof(f32) * 7;
+    // NOTE(Abi): Since made of triangles.
+    Zen3D->Shapes.Size   = 3 * Zen3D->Shapes.Stride;
+    Zen3D->Shapes.Max    = 1024;
+    
+    Zen3D->Shapes.Memory = MemoryArenaAlloc(Arena, Zen3D->Shapes.Size * Zen3D->Shapes.Max);
+    
+    // NOTE(Abi): Shape Data
+    {
+        glGenVertexArrays(1, &Zen3D->Shapes.VAO);
+        glBindVertexArray(Zen3D->Shapes.VAO);
+        
+        glGenBuffers(1, &Zen3D->Shapes.VBO);
+        glBindBuffer(GL_ARRAY_BUFFER, Zen3D->Shapes.VBO);
+        glBufferData(GL_ARRAY_BUFFER, Zen3D->Shapes.Size * Zen3D->Shapes.Max, 0, GL_DYNAMIC_DRAW);
+        
+        Zen3DOpenGLAddFloatAttribute(0, 3, 7, 0);
+        Zen3DOpenGLAddFloatAttribute(0, 4, 7, 3);
+    }
 }
 
 internal void
