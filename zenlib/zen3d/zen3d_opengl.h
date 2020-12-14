@@ -5,7 +5,7 @@
 #include <GL/glu.h>
 
 #define OPENGLPROC(function, type) global PFNGL##type##PROC gl##function;
-#include "zen2d_opengl_proc_list.inc"
+#include "zen3d_opengl_proc_list.inc"
 
 internal void Zen3DOpenGLLoadAllFunctions(void);
 #endif

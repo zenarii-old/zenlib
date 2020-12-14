@@ -5,7 +5,8 @@
 #include "zenlib/zenlib.c"
 
 struct core {
-    font Font;
+    i32 Pad;
+    //font Font;
 };
 
 internal void
@@ -13,18 +14,17 @@ AppInit() {
     fprintf(stderr, "[App] Loaded\n");
     
     Platform->Core = MemoryArenaAlloc(&Platform->PermenantArena, sizeof(core));
-    Zen2DSetDefaultFont(&Platform->Core->Font);
-    Platform->Core->Font = Zen2DLoadFontFromFNTAndPNG("libmono.fnt", "libmono.png");
+    //Zen2DSetDefaultFont(&Platform->Core->Font);
+    //Platform->Core->Font = Zen2DLoadFontFromFNTAndPNG("libmono.fnt", "libmono.png");
 }
 
 internal void
 AppUpdate() {
-    Zen2DPushText("Hi there, this is a test", v2(100, 100), 16);
+    //Zen2DPushText("Hi there, this is a test", v2(100, 100), 16);
     
-    Zen2DPushBlur(v4(90, 90, 90, 90));
+    //Zen2DPushBlur(v4(90, 90, 90, 90));
     
     if(ZenKeyDown(ZKEY_ESCAPE)) ZenPlatformQuit();
-    
 }
 
 internal void

@@ -55,6 +55,12 @@ Zen3DOpenGLAddFloatAttribute(i32 ID, u32 Count, u32 Stride, u32 Offset) {
 }
 
 internal void
+Zen3DOpenGLLoadAllFunctions(void) {
+#define OPENGLPROC(function, type) gl##function = (PFNGL##type##PROC)Platform->OpenGLLoadProcedure("gl" #function);
+#include "zen3d_opengl_proc_list.inc"
+}
+
+internal void
 Zen3DPushQuad(v3 p0, v3 p1, v3 p2, v3 p3) {
     
 }
@@ -62,7 +68,7 @@ Zen3DPushQuad(v3 p0, v3 p1, v3 p2, v3 p3) {
 internal void
 Zen3DInit(memory_arena * Arena) {
 #ifndef ZEN2D
-    // TODO(Abi): Load opengl functions
+    Zen3DOpenGLLoadAllFunctions();
 #endif
     
     Zen3D->Shapes.Stride = sizeof(f32) * 7;
@@ -88,7 +94,7 @@ Zen3DInit(memory_arena * Arena) {
 
 internal void
 Zen3DBeginFrame() {
-    
+    Zen3D->Shapes.AllocPos = 0;
 }
 
 internal void
