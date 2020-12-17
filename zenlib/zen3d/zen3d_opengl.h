@@ -22,6 +22,11 @@ internal void Zen3DOpenGLLoadAllFunctions(void);
 // use a Uniform Buffer Object for things like perspective/view.
 // model matrices should be optional for some shaders i guess
 
+// Zen3DPushShader(shader s) { Zen3D->ActiveCustomShader = s };
+// is a type of request so change in end frame too
+// when pushing meshes then use glUseProgram(Zen3D->ActiveCustomShader)
+// use a similar push camera
+
 typedef enum zen3d_request_type zen3d_request_type;
 enum zen3d_request_type {
     ZEN3D_REQUEST_STANDARD,

@@ -1,3 +1,7 @@
+//
+// ~Platform Independant OpenGL functions
+//
+
 internal u32
 Zen3DOpenGLLoadShader(const char * Name, const char * VertexSource, const char * FragmentSource) {
     
@@ -61,7 +65,12 @@ Zen3DOpenGLLoadAllFunctions(void) {
 }
 
 //
-// Shape Drawing
+// ~Uniform functions
+//
+// TODO(Abi): Uniform buffer object for view and projection (could mult before sending?)
+
+//
+// ~Shape Drawing
 //
 
 // TODO(Abi): Figure out the required order of p0, p1, p2, p3
@@ -104,9 +113,7 @@ Zen3DPushQuad(v3 p0, v3 p1, v3 p2, v3 p3, v4 Colour) {
 
 internal void
 Zen3DInit(memory_arena * Arena) {
-#ifndef ZEN2D
     Zen3DOpenGLLoadAllFunctions();
-#endif
     
     {
         Zen3D->Shapes.Stride = sizeof(f32) * 7;
@@ -137,6 +144,7 @@ Zen3DInit(memory_arena * Arena) {
     FSource = Platform->LoadFile("frag.glsl", 1);
     
     Zen3D->Shaders[0] = Zen3DOpenGLLoadShader("text", VSource, FSource);
+    //Log("\n%s\n---\n%s", VSource, FSource);
 }
 
 internal void
@@ -148,16 +156,15 @@ Zen3DBeginFrame() {
     
     // TEMP(Abi);
     
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+    
 }
 
 internal void
 Zen3DEndFrame() {
     Assert(Zen3D->RequestCount < ZEN3D_MAX_REQUESTS);
     
-    //glEnable(GL_DEPTH);
-    glDisable(GL_BLEND);
-    
+    glEnable(GL_DEPTH_TEST);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     
     for(i32 idx = 0; idx < Zen3D->RequestCount; ++idx) {
         zen3d_request * Request = &Zen3D->Requests[idx];
@@ -170,15 +177,6 @@ Zen3DEndFrame() {
                     glBindBuffer(GL_ARRAY_BUFFER, Zen3D->Shapes.VBO);
                     glBufferSubData(GL_ARRAY_BUFFER, 0, Request->DataLength, Request->Data);
                     i32 Count = Request->DataLength/Zen3D->Shapes.Stride;
-                    fprintf(stderr, "{\n");
-                    for(int k = 0; k < Count; ++k) {
-                        fprintf(stderr, "\t");
-                        for (int i = 0; i < 7; ++i) {
-                            fprintf(stderr, "%.2f, ", ((f32 *)Request->Data)[k*7+i]);
-                        }
-                        fprintf(stderr, "\n");
-                    }
-                    fprintf(stderr, "}\n");
                     glDrawArrays(GL_TRIANGLES, 0, Count);
                 }
                 glBindVertexArray(0);
@@ -188,5 +186,5 @@ Zen3DEndFrame() {
         }
     }
     
-    glDisable(GL_DEPTH);
+    glDisable(GL_DEPTH_TEST);
 }
