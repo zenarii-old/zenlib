@@ -1,8 +1,8 @@
 #ifndef ZENCORE_LINUX_DEBUG_H
 #define ZENCORE_LINUX_DEBUG_H
 
-#define HardAssert(expr) if(!(expr)) { FailedAssert(__FILE__, __LINE__, #expr, 1); }
-#define SoftAssert(expr) if(!(expr)) { FailedAssert(__FILE__, __LINE__, #expr, 0); }
+#define HardAssert(expr) do{ if(!(expr)){ FailedAssert(__FILE__,__LINE__, #expr, 1);}} while(0)
+#define SoftAssert(expr) do{ if(!(expr)){ FailedAssert(__FILE__,__LINE__, #expr, 0);}} while(0)
 #define Assert HardAssert
 
 enum debug_log_type {
