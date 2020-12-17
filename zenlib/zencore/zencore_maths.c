@@ -5,7 +5,7 @@
 //
 // Matrices
 //
-
+// NOTE(Abi): Row Major.
 typedef struct matrix4x4 matrix4x4;
 struct matrix4x4 {
     union {
@@ -15,31 +15,30 @@ struct matrix4x4 {
             f32 _31, _32, _33, _34;
             f32 _41, _42, _43, _44;
         };
-        f32 Elements[16];
+        f32 Elements[4][4];
     };
 };
 
-#define Matrix4x4(...) (matrix4x4){{{__VA_ARGS__}}};
-
-internal matrix4x4
+internal inline matrix4x4
 DiagMatrix(f32 a, f32 b, f32 c, f32 d) {
-    matrix4x4 DiagonalMatrix = 
-        Matrix4x4(a, 0, 0, 0,
-                  0, b, 0, 0,
-                  0, 0, c, 0,
-                  0, 0, 0, d);
-    Log("%f", DiagonalMatrix._44);
-    return DiagonalMatrix;
+    matrix4x4 Result = {0};
+    
+    Result._11 = a;
+    Result._22 = b;
+    Result._33 = c;
+    Result._44 = d;
+    
+    return Result;
 }
 
 internal matrix4x4
 IdentityMatrix() {
-    matrix4x4 I = 
-        Matrix4x4(1, 0, 0, 0,
-                  0, 1, 0, 0,
-                  0, 0, 1, 0,
-                  0, 0, 0, 1);
-    return I;
+    matrix4x4 Iden = {0};
+    Iden._11 = 1.0;
+    Iden._22 = 1.0;
+    Iden._33 = 1.0;
+    Iden._44 = 1.0;
+    return Iden;
 }
 
 internal void

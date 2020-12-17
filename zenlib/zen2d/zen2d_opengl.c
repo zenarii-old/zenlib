@@ -202,7 +202,6 @@ Zen2DInit(memory_arena * Arena) {
     
     glEnable(GL_BLEND);
     
-    
     glGenVertexArrays(1, &Zen2D->GeneralVAO);
     
 #include "shaders/generated_opengl_shaders.inc"
@@ -334,7 +333,8 @@ Zen2D->name.AllocPos = 0; \
 }
 
 internal void
-Zen2DPushRectVertices(v4 Rect, v4 Colour00, v4 Colour01, v4 Colour10, v4 Colour11){
+Zen2DPushRectVertices(v4 Rect, v4 Colour00, v4 Colour01, v4 Colour10, v4 Colour11) {
+    Assert(Zen2D->Rect.AllocPos/Zen2D->Rect.Size < Zen2D->Rect.Max);
     if(!Zen2D->ActiveBatch || Zen2D->ActiveBatch->Type != ZEN2D_BATCH_RECTS) {
         Zen2D->ActiveBatch = &Zen2D->Batches[Zen2D->BatchesCount++];
         Zen2D->ActiveBatch->Type = ZEN2D_BATCH_RECTS;
@@ -647,15 +647,12 @@ Zen2DPushTextInBox(char * String, f32 Size, v4 Box) {
 
 internal void
 Zen2DBeginFrame() {
-    // NOTE(Abi): Semi temp stuff, will eventually use FBOs and things
+    
     {
         Zen2DBindFramebuffer(&Zen2D->Framebuffer[ZEN2D_FBO_MAIN]);
         glClearColor(0.f, 0.f, 0.f, 0.f);
         glClear(GL_COLOR_BUFFER_BIT);
         Zen2DBindFramebuffer(0);
-        // TODO(Abi): This will wipe the main framebuffer which zen3d writes too
-        glClearColor(0.0f, 0.0f, 0.0f, 1.f);
-        glClear(GL_COLOR_BUFFER_BIT);
     }
     
     // NOTE(Abi): Reset the memory from the previous frame
@@ -673,7 +670,6 @@ Zen2DBeginFrame() {
 
 internal void
 Zen2DEndFrame() {
-    // TODO(Abi): Maybe push the final 3D framebuffer to the main 2D framebuffer? May be depth issues, not an issue right now tho.
     // IDEA(Abi): could always have MAIN framebuffer bound, and only reset at the end of the blur/other effects?
     glDisable(GL_DEPTH);
     for(i32 i = 0; i < Zen2D->BatchesCount; ++i) {
@@ -775,11 +771,13 @@ Zen2DEndFrame() {
     
     // NOTE(Abi) Copy main framebuffer to the default one.
     // ugh
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_FBO_BLIT]);
-    glBindTexture(GL_TEXTURE_2D, Zen2D->Framebuffer[ZEN2D_FBO_MAIN].Texture);
-    glBindVertexArray(Zen2D->FramebufferBlit.VAO);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-    glBindVertexArray(0);
+    if(Zen2D->BatchesCount > 0) {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+        glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_FBO_BLIT]);
+        glBindTexture(GL_TEXTURE_2D, Zen2D->Framebuffer[ZEN2D_FBO_MAIN].Texture);
+        glBindVertexArray(Zen2D->FramebufferBlit.VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindVertexArray(0);
+    }
 }

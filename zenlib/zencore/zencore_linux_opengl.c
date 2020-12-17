@@ -28,6 +28,10 @@ LinuxRendererResize(i32 Width, i32 Height) {
 internal void
 LinuxRendererFinalise(void) {
     glXMakeCurrent(XDisplay, XWindow, GLContext);
+    glClearColor(1.f, 1.f, 1.f, 1.f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glXSwapBuffers(XDisplay, XWindow);
+    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 internal void

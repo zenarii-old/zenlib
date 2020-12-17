@@ -60,9 +60,46 @@ Zen3DOpenGLLoadAllFunctions(void) {
 #include "zen3d_opengl_proc_list.inc"
 }
 
+//
+// Shape Drawing
+//
+
+// TODO(Abi): Figure out the required order of p0, p1, p2, p3
 internal void
-Zen3DPushQuad(v3 p0, v3 p1, v3 p2, v3 p3) {
+Zen3DPushQuad(v3 p0, v3 p1, v3 p2, v3 p3, v4 Colour) {
+    Assert((Zen3D->Shapes.AllocPos/Zen3D->Shapes.Size) + 6 < Zen3D->Shapes.Max);
     
+    if(!Zen3D->ActiveRequest || Zen3D->ActiveRequest->Type != ZEN3D_REQUEST_STANDARD) {
+        Zen3D->ActiveRequest = &Zen3D->Requests[Zen3D->RequestCount++];
+        Zen3D->ActiveRequest->Type = ZEN3D_REQUEST_STANDARD;
+        
+        Zen3D->ActiveRequest->Data = Zen3D->Shapes.Memory + Zen3D->Shapes.AllocPos;
+        Zen3D->ActiveRequest->DataLength = 0;
+    }
+    
+    // TODO(Abi): Get Matrices from the camera view and matrix
+    GLubyte * Data = Zen3D->Shapes.Memory + Zen3D->Shapes.AllocPos;
+    {
+        *(v3 *)((f32 *)(Data)+0)  = p0;
+        *(v4 *)((f32 *)(Data)+3)  = Colour;
+        
+        *(v3 *)((f32 *)(Data)+7)  = p1;
+        *(v4 *)((f32 *)(Data)+10) = Colour;
+        
+        *(v3 *)((f32 *)(Data)+14) = p3;
+        *(v4 *)((f32 *)(Data)+17) = Colour;
+        
+        *(v3 *)((f32 *)(Data)+21) = p1;
+        *(v4 *)((f32 *)(Data)+24) = Colour;
+        
+        *(v3 *)((f32 *)(Data)+28) = p2;
+        *(v4 *)((f32 *)(Data)+31) = Colour;
+        
+        *(v3 *)((f32 *)(Data)+35) = p3;
+        *(v4 *)((f32 *)(Data)+38) = Colour;
+    }
+    Zen3D->Shapes.AllocPos += Zen3D->Shapes.Stride * 6;
+    Zen3D->ActiveRequest->DataLength += Zen3D->Shapes.Stride * 6;
 }
 
 internal void
@@ -71,12 +108,14 @@ Zen3DInit(memory_arena * Arena) {
     Zen3DOpenGLLoadAllFunctions();
 #endif
     
-    Zen3D->Shapes.Stride = sizeof(f32) * 7;
-    // NOTE(Abi): Since made of triangles.
-    Zen3D->Shapes.Size   = 3 * Zen3D->Shapes.Stride;
-    Zen3D->Shapes.Max    = 1024;
-    
-    Zen3D->Shapes.Memory = MemoryArenaAlloc(Arena, Zen3D->Shapes.Size * Zen3D->Shapes.Max);
+    {
+        Zen3D->Shapes.Stride = sizeof(f32) * 7;
+        // NOTE(Abi): Since made of triangles.
+        Zen3D->Shapes.Size   = 3 * Zen3D->Shapes.Stride;
+        Zen3D->Shapes.Max    = 1024;
+        
+        Zen3D->Shapes.Memory = MemoryArenaAlloc(Arena, Zen3D->Shapes.Size * Zen3D->Shapes.Max);
+    }
     
     // NOTE(Abi): Shape Data
     {
@@ -85,23 +124,69 @@ Zen3DInit(memory_arena * Arena) {
         
         glGenBuffers(1, &Zen3D->Shapes.VBO);
         glBindBuffer(GL_ARRAY_BUFFER, Zen3D->Shapes.VBO);
-        glBufferData(GL_ARRAY_BUFFER, Zen3D->Shapes.Size * Zen3D->Shapes.Max, 0, GL_DYNAMIC_DRAW);
-        
+        glBufferData(GL_ARRAY_BUFFER, Zen3D->Shapes.Max * Zen3D->Shapes.Size, 0, GL_DYNAMIC_DRAW);
+        // NOTE(Abi): Position data
         Zen3DOpenGLAddFloatAttribute(0, 3, 7, 0);
-        Zen3DOpenGLAddFloatAttribute(0, 4, 7, 3);
+        // NOTE(Abi): Colour data
+        Zen3DOpenGLAddFloatAttribute(1, 4, 7, 3);
+        glBindVertexArray(0);
     }
+    
+    char * VSource, * FSource;
+    VSource = Platform->LoadFile("vert.glsl", 1);
+    FSource = Platform->LoadFile("frag.glsl", 1);
+    
+    Zen3D->Shaders[0] = Zen3DOpenGLLoadShader("text", VSource, FSource);
 }
 
 internal void
 Zen3DBeginFrame() {
     Zen3D->Shapes.AllocPos = 0;
+    Zen3D->RequestCount = 0;
+    Zen3D->ActiveRequest = 0;
+    // TODO(Abi): Clear framebuffer colour/depth
+    
+    // TEMP(Abi);
+    
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 }
 
 internal void
 Zen3DEndFrame() {
-    glEnable(GL_DEPTH);
-    glClearColor(0.f, 0.f, 0.f, 0.f);
-    //BIND FRAMEBUFFER,
+    Assert(Zen3D->RequestCount < ZEN3D_MAX_REQUESTS);
+    
+    //glEnable(GL_DEPTH);
+    glDisable(GL_BLEND);
+    
+    
+    for(i32 idx = 0; idx < Zen3D->RequestCount; ++idx) {
+        zen3d_request * Request = &Zen3D->Requests[idx];
+        
+        switch(Request->Type) {
+            case ZEN3D_REQUEST_STANDARD: {
+                glUseProgram(Zen3D->Shaders[0]);
+                glBindVertexArray(Zen3D->Shapes.VAO);
+                {
+                    glBindBuffer(GL_ARRAY_BUFFER, Zen3D->Shapes.VBO);
+                    glBufferSubData(GL_ARRAY_BUFFER, 0, Request->DataLength, Request->Data);
+                    i32 Count = Request->DataLength/Zen3D->Shapes.Stride;
+                    fprintf(stderr, "{\n");
+                    for(int k = 0; k < Count; ++k) {
+                        fprintf(stderr, "\t");
+                        for (int i = 0; i < 7; ++i) {
+                            fprintf(stderr, "%.2f, ", ((f32 *)Request->Data)[k*7+i]);
+                        }
+                        fprintf(stderr, "\n");
+                    }
+                    fprintf(stderr, "}\n");
+                    glDrawArrays(GL_TRIANGLES, 0, Count);
+                }
+                glBindVertexArray(0);
+            } break;
+            
+            default: Assert("[Zen3D] Request had an invalid type" == 0);
+        }
+    }
     
     glDisable(GL_DEPTH);
 }

@@ -43,6 +43,7 @@ ZENAPPFUNC ZEN_APPLICATION_HOT_LOAD(HotLoad) {
     Zen2DOpenGLLoadAllFunctions();
 #elif defined(USE_OPENGL) && defined(ZEN3D)
     Zen3DOpenGLLoadAllFunctions();
+    Log("func load");
 #endif
     
 #ifdef ZEN2D

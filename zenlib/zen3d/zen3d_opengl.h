@@ -29,6 +29,7 @@ enum zen3d_request_type {
     ZEN3D_REQUEST_COUNT
 };
 
+typedef struct zen3d_request zen3d_request;
 struct zen3d_request {
     zen3d_request_type Type;
     
@@ -39,7 +40,8 @@ struct zen3d_request {
 struct zen3d {
     ZEN3D_COMMON;
     
-    GLuint Shaders[1];
+    GLuint Shaders[ZEN3D_REQUEST_COUNT];
+    GLuint GeneralVAO;
     
     struct { \
         GLuint VAO, VBO; \
@@ -49,12 +51,27 @@ struct zen3d {
         unsigned char * Memory; \
         u32 AllocPos; \
     } Shapes;
+    
+#define ZEN3D_MAX_REQUESTS 2048
+    zen3d_request * ActiveRequest;
+    zen3d_request   Requests[ZEN3D_MAX_REQUESTS];
+    u32 RequestCount;
 };
-
+/*
 typedef struct mesh mesh;
 struct mesh {
     GLuint Shader;
     
     v3 * Vertices;
     v4 * Colours;
+};
+*/
+//
+// Helper structs
+//
+
+typedef struct _7f32 _7f32;
+struct _7f32 {
+    v3 Pos;
+    v4 Col;
 };
