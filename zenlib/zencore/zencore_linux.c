@@ -8,6 +8,9 @@
 #undef Success
 
 // NOTE(Abi): OpenGL
+#include <GL/gl.h>
+#include <GL/glx.h>
+#include <GL/glu.h>
 
 // NOTE(Abi): CRT
 
@@ -24,7 +27,6 @@ global Atom WindowCloseID;
 global platform GlobalPlatform;
 
 // NOTE(Abi): Zenlib Implementations
-
 #ifdef USE_OPENGL
 #include "zencore_linux_opengl.c"
 #endif

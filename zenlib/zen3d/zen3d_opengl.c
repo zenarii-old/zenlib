@@ -163,9 +163,8 @@ internal void
 Zen3DEndFrame() {
     Assert(Zen3D->RequestCount < ZEN3D_MAX_REQUESTS);
     
-    glEnable(GL_DEPTH_TEST);
-    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-    
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClear(GL_DEPTH_BUFFER_BIT);
     for(i32 idx = 0; idx < Zen3D->RequestCount; ++idx) {
         zen3d_request * Request = &Zen3D->Requests[idx];
         

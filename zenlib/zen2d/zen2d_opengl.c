@@ -1,9 +1,3 @@
-internal void
-Zen2DOpenGLLoadAllFunctions(void) {
-#define OPENGLPROC(function, type) gl##function = (PFNGL##type##PROC)Platform->OpenGLLoadProcedure("gl" #function);
-#include "zen2d_opengl_proc_list.inc"
-}
-
 internal u32
 Zen2DOpenGLLoadShader(const char * Name, const char * VertexSource, const char * FragmentSource) {
     u32 Shader = 0;
@@ -138,67 +132,9 @@ Zen2DIsFontValid(font * Font) {
     return Zen2DIsTextureValid(&Font->Texture) && Font->Glyphs;
 }
 
-internal zen2d_fbo
-Zen2DCreateFramebuffer(GLint Width, GLint Height) {
-    GLuint ID = 0;
-    glGenFramebuffers(1, &ID);
-    glBindFramebuffer(GL_FRAMEBUFFER, ID);
-    
-    GLuint Texture = 0;
-    glGenTextures(1, &Texture);
-    glBindTexture(GL_TEXTURE_2D, Texture);
-    {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Width, Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-    }
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, Texture, 0);
-    
-    GLuint Depth = 0;
-    glGenTextures(1, &Depth);
-    glBindTexture(GL_TEXTURE_2D, Depth);
-    {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, Width, Height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, 0);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, Depth, 0);
-    }
-    
-    Assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
-    
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    
-    zen2d_fbo Framebuffer = {0};
-    Framebuffer.ID = ID;
-    Framebuffer.Texture = Texture;
-    Framebuffer.Depth = Depth;
-    Framebuffer.Width = Width;
-    Framebuffer.Height = Height;
-    
-    return Framebuffer;
-}
-
-internal void
-Zen2DDeleteFramebuffer(zen2d_fbo * Framebuffer) {
-    glDeleteFramebuffers(1, &Framebuffer->ID);
-    glDeleteTextures(1, &Framebuffer->Texture);
-    glDeleteTextures(1, &Framebuffer->Depth);
-    
-    *Framebuffer = (zen2d_fbo){0};
-}
-
-internal void
-Zen2DBindFramebuffer(zen2d_fbo * Framebuffer) {
-    if(Framebuffer) glBindFramebuffer(GL_FRAMEBUFFER, Framebuffer->ID);
-    else            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
 internal void
 Zen2DInit(memory_arena * Arena) {
     Zen2DInitCommon();
-    
-    Zen2DOpenGLLoadAllFunctions();
     
     glEnable(GL_BLEND);
     
@@ -328,7 +264,7 @@ Zen2D->name.AllocPos = 0; \
     
     // NOTE(Abi): Load FBOs
     for(i32 i = 0; i < ZEN2D_FBO_COUNT; ++i) {
-        Zen2D->Framebuffer[i] = Zen2DCreateFramebuffer(Platform->ScreenWidth, Platform->ScreenHeight);
+        Zen2D->Framebuffer[i] = OpenGLCreateFramebuffer(Platform->ScreenWidth, Platform->ScreenHeight);
     }
 }
 
@@ -649,10 +585,10 @@ internal void
 Zen2DBeginFrame() {
     
     {
-        Zen2DBindFramebuffer(&Zen2D->Framebuffer[ZEN2D_FBO_MAIN]);
+        OpenGLBindFramebuffer(&Zen2D->Framebuffer[ZEN2D_FBO_MAIN]);
         glClearColor(0.f, 0.f, 0.f, 0.f);
         glClear(GL_COLOR_BUFFER_BIT);
-        Zen2DBindFramebuffer(0);
+        OpenGLBindFramebuffer(0);
     }
     
     // NOTE(Abi): Reset the memory from the previous frame
@@ -676,7 +612,7 @@ Zen2DEndFrame() {
         zen2d_batch * Batch = &Zen2D->Batches[i];
         switch(Batch->Type) {
             case ZEN2D_BATCH_RECTS: {
-                Zen2DBindFramebuffer(&Zen2D->Framebuffer[ZEN2D_FBO_MAIN]);
+                OpenGLBindFramebuffer(&Zen2D->Framebuffer[ZEN2D_FBO_MAIN]);
                 glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
                 
                 glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_RECTANGLES]);
@@ -691,7 +627,7 @@ Zen2DEndFrame() {
             } break;
             
             case ZEN2D_BATCH_LINES: {
-                Zen2DBindFramebuffer(&Zen2D->Framebuffer[ZEN2D_FBO_MAIN]);
+                OpenGLBindFramebuffer(&Zen2D->Framebuffer[ZEN2D_FBO_MAIN]);
                 glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
                 
                 glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_LINES]);
@@ -706,7 +642,7 @@ Zen2DEndFrame() {
             } break;
             
             case ZEN2D_BATCH_TEXTURES: {
-                Zen2DBindFramebuffer(&Zen2D->Framebuffer[ZEN2D_FBO_MAIN]);
+                OpenGLBindFramebuffer(&Zen2D->Framebuffer[ZEN2D_FBO_MAIN]);
                 glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
                 
                 glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_TEXTURES]);
@@ -722,7 +658,7 @@ Zen2DEndFrame() {
             } break;
             
             case ZEN2D_BATCH_TEXT: {
-                Zen2DBindFramebuffer(&Zen2D->Framebuffer[ZEN2D_FBO_MAIN]);
+                OpenGLBindFramebuffer(&Zen2D->Framebuffer[ZEN2D_FBO_MAIN]);
                 glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
                 
                 glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_TEXT]);
@@ -739,7 +675,7 @@ Zen2DEndFrame() {
             } break;
             
             case ZEN2D_BATCH_BLUR: {
-                Zen2DBindFramebuffer(&Zen2D->Framebuffer[ZEN2D_FBO_EFFECTS]);
+                OpenGLBindFramebuffer(&Zen2D->Framebuffer[ZEN2D_FBO_EFFECTS]);
                 // TODO(Abi): Maybe only set once and never change?
                 glClearColor(0.f, 0.f, 0.f, 0.f); 
                 glClear(GL_COLOR_BUFFER_BIT);
@@ -755,7 +691,7 @@ Zen2DEndFrame() {
                 }
                 
                 // NOTE(Abi): Draw back onto the main framebuffer
-                Zen2DBindFramebuffer(&Zen2D->Framebuffer[ZEN2D_FBO_MAIN]);
+                OpenGLBindFramebuffer(&Zen2D->Framebuffer[ZEN2D_FBO_MAIN]);
                 glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_FBO_BLIT]);
                 glBindVertexArray(Zen2D->FramebufferBlit.VAO);
                 {

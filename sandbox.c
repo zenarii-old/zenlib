@@ -18,6 +18,7 @@ AppInit() {
 
 internal void
 AppUpdate() {
+#ifdef ZEN3D
     // TODO(Abi): figure out why i can't just set this once, is it bc i ditch the shsader?
     matrix4x4 I = ScaleMatrix(1.f, 1.f, 1.f);
     GLuint ProjLoc = glGetUniformLocation(Zen3D->Shaders[0], "Projection");
@@ -45,7 +46,10 @@ AppUpdate() {
         v4 Colour = v4(1.f, 1.f, 0.f, 1.f);
         Zen3DPushQuad(p0, p1, p2, p3, Colour);
     }
-    
+#endif
+#ifdef ZEN2D
+    Zen2DPushRect(v4(100, 100, 100, 100), v4(1.f, 0.f, 0.f, 1.f));
+#endif
     if(ZenKeyDown(ZKEY_ESCAPE)) ZenPlatformQuit();
 }
 

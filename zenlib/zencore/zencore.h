@@ -96,6 +96,7 @@ struct v4 {
 #include "zencore_memory.c"
 #include "zencore_maths.c"
 #include "zencore_strings.c"
+#include "zencore_opengl.c"
 
 #include "program_options.inc"
 
