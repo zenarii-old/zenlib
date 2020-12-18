@@ -1,7 +1,7 @@
 //
 // ~Platform Independant OpenGL functions
 //
-
+// TODO(Abi): unify this into zencore_opengl.c
 internal u32
 Zen3DOpenGLLoadShader(const char * Name, const char * VertexSource, const char * FragmentSource) {
     
@@ -51,19 +51,6 @@ Zen3DOpenGLLoadShader(const char * Name, const char * VertexSource, const char *
     
     return Shader;
 }
-
-internal void
-Zen3DOpenGLAddFloatAttribute(i32 ID, u32 Count, u32 Stride, u32 Offset) {
-    glVertexAttribPointer(ID, Count, GL_FLOAT, GL_FALSE, Stride * sizeof(f32), (void *)(Offset*sizeof(f32)));
-    glEnableVertexAttribArray(ID);
-}
-
-internal void
-Zen3DOpenGLLoadAllFunctions(void) {
-#define OPENGLPROC(function, type) gl##function = (PFNGL##type##PROC)Platform->OpenGLLoadProcedure("gl" #function);
-#include "zen3d_opengl_proc_list.inc"
-}
-
 //
 // ~Uniform functions
 //
@@ -111,10 +98,12 @@ Zen3DPushQuad(v3 p0, v3 p1, v3 p2, v3 p3, v4 Colour) {
     Zen3D->ActiveRequest->DataLength += Zen3D->Shapes.Stride * 6;
 }
 
+//
+// ~
+//
+
 internal void
 Zen3DInit(memory_arena * Arena) {
-    Zen3DOpenGLLoadAllFunctions();
-    
     {
         Zen3D->Shapes.Stride = sizeof(f32) * 7;
         // NOTE(Abi): Since made of triangles.
@@ -133,9 +122,9 @@ Zen3DInit(memory_arena * Arena) {
         glBindBuffer(GL_ARRAY_BUFFER, Zen3D->Shapes.VBO);
         glBufferData(GL_ARRAY_BUFFER, Zen3D->Shapes.Max * Zen3D->Shapes.Size, 0, GL_DYNAMIC_DRAW);
         // NOTE(Abi): Position data
-        Zen3DOpenGLAddFloatAttribute(0, 3, 7, 0);
+        OpenGLAddFloatAttribute(0, 3, 7, 0);
         // NOTE(Abi): Colour data
-        Zen3DOpenGLAddFloatAttribute(1, 4, 7, 3);
+        OpenGLAddFloatAttribute(1, 4, 7, 3);
         glBindVertexArray(0);
     }
     

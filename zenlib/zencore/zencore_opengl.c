@@ -71,10 +71,25 @@ OpenGLBindFramebuffer(framebuffer * Framebuffer) {
 }
 
 internal void
-Zen2DDeleteFramebuffer(framebuffer * Framebuffer) {
+OpenGLDeleteFramebuffer(framebuffer * Framebuffer) {
     glDeleteFramebuffers(1, &Framebuffer->ID);
     glDeleteTextures(1, &Framebuffer->Texture);
     glDeleteTextures(1, &Framebuffer->Depth);
     
     *Framebuffer = (framebuffer){0};
 }
+
+//
+//
+//
+
+internal void
+OpenGLAddFloatAttribute(i32 ID, u32 Count, u32 Stride, u32 Offset) {
+    glVertexAttribPointer(ID, Count, GL_FLOAT, GL_FALSE, Stride * sizeof(f32), (void *)(Offset*sizeof(f32)));
+    glEnableVertexAttribArray(ID);
+}
+
+// TODO NOTE TODO
+// ~Shaders
+// TODO NOTE TODO
+

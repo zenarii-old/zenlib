@@ -46,11 +46,7 @@ Zen2DOpenGLLoadShader(const char * Name, const char * VertexSource, const char *
     return Shader;
 }
 
-internal void
-Zen2DOpenGLAddFloatAttribute(i32 ID, u32 Count, u32 Stride, u32 Offset) {
-    glVertexAttribPointer(ID, Count, GL_FLOAT, GL_FALSE, Stride * sizeof(f32), (void *)(Offset*sizeof(f32)));
-    glEnableVertexAttribArray(ID);
-}
+
 
 internal texture
 Zen2DLoadTexture(unsigned char * Data, i32 Width, i32 Height, i32 Channels, u32 Flags) {
@@ -166,9 +162,9 @@ Zen2D->name.AllocPos = 0; \
         glBindBuffer(GL_ARRAY_BUFFER, Zen2D->Rect.VBO);
         glBufferData(GL_ARRAY_BUFFER, Zen2D->Rect.Max * Zen2D->Rect.Size, 0, GL_DYNAMIC_DRAW);
         // NOTE(Abi): Position data
-        Zen2DOpenGLAddFloatAttribute(0, 2, 6, 0);
+        OpenGLAddFloatAttribute(0, 2, 6, 0);
         // NOTE(Abi): Colour data
-        Zen2DOpenGLAddFloatAttribute(1, 4, 6, 2);
+        OpenGLAddFloatAttribute(1, 4, 6, 2);
         glBindVertexArray(0);
     }
     
@@ -181,9 +177,9 @@ Zen2D->name.AllocPos = 0; \
         glBindBuffer(GL_ARRAY_BUFFER, Zen2D->Line.VBO);
         glBufferData(GL_ARRAY_BUFFER, Zen2D->Line.Max * Zen2D->Line.Size, 0, GL_DYNAMIC_DRAW);
         // NOTE(Abi): Position data
-        Zen2DOpenGLAddFloatAttribute(0, 2, 6, 0);
+        OpenGLAddFloatAttribute(0, 2, 6, 0);
         // NOTE(Abi): Colour data
-        Zen2DOpenGLAddFloatAttribute(1, 4, 6, 2);
+        OpenGLAddFloatAttribute(1, 4, 6, 2);
         
         glBindVertexArray(0);
     }
@@ -197,11 +193,11 @@ Zen2D->name.AllocPos = 0; \
         glBindBuffer(GL_ARRAY_BUFFER, Zen2D->Texture.VBO);
         glBufferData(GL_ARRAY_BUFFER, Zen2D->Texture.Max * Zen2D->Texture.Size, 0, GL_DYNAMIC_DRAW);
         // NOTE(Abi): Position data
-        Zen2DOpenGLAddFloatAttribute(0, 2, 8, 0);
+        OpenGLAddFloatAttribute(0, 2, 8, 0);
         // NOTE(Abi): Colour data
-        Zen2DOpenGLAddFloatAttribute(1, 4, 8, 2);
+        OpenGLAddFloatAttribute(1, 4, 8, 2);
         // NOTE(Abi): UV data
-        Zen2DOpenGLAddFloatAttribute(2, 2, 8, 6);
+        OpenGLAddFloatAttribute(2, 2, 8, 6);
         
         glBindVertexArray(0);
     }
@@ -215,11 +211,11 @@ Zen2D->name.AllocPos = 0; \
         glBindBuffer(GL_ARRAY_BUFFER, Zen2D->Text.VBO);
         glBufferData(GL_ARRAY_BUFFER, Zen2D->Text.Max * Zen2D->Text.Size, 0, GL_DYNAMIC_DRAW);
         // NOTE(Abi): Position data
-        Zen2DOpenGLAddFloatAttribute(0, 2, 8, 0);
+        OpenGLAddFloatAttribute(0, 2, 8, 0);
         // NOTE(Abi): Colour data
-        Zen2DOpenGLAddFloatAttribute(1, 4, 8, 2);
+        OpenGLAddFloatAttribute(1, 4, 8, 2);
         // NOTE(Abi): UV data
-        Zen2DOpenGLAddFloatAttribute(2, 2, 8, 6);
+        OpenGLAddFloatAttribute(2, 2, 8, 6);
         
         glBindVertexArray(0);
     }
@@ -233,7 +229,7 @@ Zen2D->name.AllocPos = 0; \
         glBindBuffer(GL_ARRAY_BUFFER, Zen2D->Blur.VBO);
         glBufferData(GL_ARRAY_BUFFER, Zen2D->Blur.Max * Zen2D->Blur.Size, 0, GL_DYNAMIC_DRAW);
         // NOTE(Abi): Position Data
-        Zen2DOpenGLAddFloatAttribute(0, 2, 2, 0);
+        OpenGLAddFloatAttribute(0, 2, 2, 0);
         glBindVertexArray(0);
     }
     
@@ -257,9 +253,9 @@ Zen2D->name.AllocPos = 0; \
         glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_STATIC_DRAW);
         
         // NOTE(Abi): Position Data
-        Zen2DOpenGLAddFloatAttribute(0, 2, 4, 0);
+        OpenGLAddFloatAttribute(0, 2, 4, 0);
         // NOTE(Abi): UV Data
-        Zen2DOpenGLAddFloatAttribute(1, 2, 4, 2);
+        OpenGLAddFloatAttribute(1, 2, 4, 2);
     }
     
     // NOTE(Abi): Load FBOs

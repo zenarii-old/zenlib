@@ -1,15 +1,3 @@
-// NOTE(Abi) Zen2d loads these already
-#if defined(BUILD_LINUX) && !defined(ZEN2D)
-#include <GL/gl.h>
-#include <GL/glx.h>
-#include <GL/glu.h>
-
-#define OPENGLPROC(function, type) global PFNGL##type##PROC gl##function;
-#include "zen3d_opengl_proc_list.inc"
-
-internal void Zen3DOpenGLLoadAllFunctions(void);
-#endif
-
 // TODO(Abi):
 // Zen3DPushLine() Can also then be wrapped
 // Zen3DPushShape() Quads, Cube maybe idk
@@ -71,12 +59,3 @@ struct mesh {
     v4 * Colours;
 };
 */
-//
-// Helper structs
-//
-
-typedef struct _7f32 _7f32;
-struct _7f32 {
-    v3 Pos;
-    v4 Col;
-};
