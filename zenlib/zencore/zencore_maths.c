@@ -1,9 +1,53 @@
+#define EPSILON 0.00001
+#define SquareRoot sqrt
+
+//
+// ~Vectors
+//
 #define V2Scale(v, s) v2((v).x * (s), (v).y * (s))
 #define V3Scale(v, s) v3((v).x * (s), (v).y * (s), (v).z * (s))
 #define V4Scale(v, s) v4((v).x * (s), (v).y * (s), (v).z * (s), (v).w * (s))
 
+// NOTE(Abi): Component wise operations
+#define VecOp(name, op) \
+internal inline v2 name##V2(v2 a, v2 b) { return v2(a.x op b.x, a.y op b.y); }\
+internal inline v3 name##V3(v3 a, v3 b) { return v3(a.x op b.x, a.y op b.y, a.z op b.z); }\
+internal inline v4 name##V4(v4 a, v4 b) {\
+return v4(a.x op b.x, a.y op b.y, a.z op b.z, a.w op b.w); }
+
+VecOp(Subtract, -)
+VecOp(Add, +)
+VecOp(Divide, /)
+VecOp(Multiply, *)
+
+internal inline v3
+NormaliseV3(v3 v) {
+    f32 Squared = v.x * v.x + v.y * v.y + v.z * v.z;
+    if(Squared > 1.f + EPSILON || Squared < 1.f - EPSILON) {
+        f32 Length = sqrt(Squared);
+        v = v3(v.x/Length, v.y/Length, v.z/Length);
+    }
+    return v;
+}
+
+internal inline v3
+CrossV3(v3 a, v3 b) {
+    v3 Cross = {
+        a.y * b.z - b.y * a.z,
+        b.x * a.z - a.x * b.z,
+        a.x * b.y - b.x * a.y
+    };
+    return Cross;
+}
+
+internal inline f32
+DotV3(v3 a, v3 b) {
+    v3 c = MultiplyV3(a, b);
+    return c.x + c.y + c.z;
+}
+
 //
-// Matrices
+// ~Matrices
 //
 // NOTE(Abi): Row Major.
 typedef struct matrix4x4 matrix4x4;
@@ -72,6 +116,24 @@ TranslationMatrixV3(v3 v) {
     return Trans;
 }
 
+internal inline matrix4x4
+LookAt(v3 Eye, v3 Target, v3 Up) {
+    matrix4x4 Result = {0};
+    
+    v3 z = SubtractV3(Eye, Target);
+    z = NormaliseV3(z);
+    v3 x = CrossV3(Up, z);
+    x = NormaliseV3(x);
+    v3 y = CrossV3(x, z);
+    
+    Result = Matrix4x4(x.x, x.y, x.z, -DotV3(x, Eye),
+                       y.x, y.y, y.z, -DotV3(y, Eye),
+                       z.x, z.y, z.z, -DotV3(z, Eye),
+                       0.f, 0.f, 0.f, 1.f);
+    
+    return Result;
+}
+
 //
 // ~Operations
 //
@@ -87,6 +149,7 @@ MultM4M4(matrix4x4 m1, matrix4x4 m2) {
     }
     return Result;
 }
+
 // TODO(Abi): Test
 internal inline v4
 MultM4V4(matrix4x4 m, v4 v) {
@@ -96,6 +159,19 @@ MultM4V4(matrix4x4 m, v4 v) {
     Result.z = (v.x * m._31) + (v.y * m._32) + (v.z * m._33) + (v.w * m._34);
     Result.w = (v.x * m._41) + (v.y * m._42) + (v.z * m._43) + (v.w * m._44);
     return Result;
+}
+
+internal inline matrix4x4
+TransposeMatrix(matrix4x4 mat) {
+    matrix4x4 mT = {0};
+    
+    for(i32 n = 0; n < 4; ++n) {
+        for(i32 m = 0; m < 4; ++m) {
+            mT.Elements[n][m] = mat.Elements[m][n];
+        }
+    }
+    
+    return mT;
 }
 
 //

@@ -54,6 +54,8 @@ struct platform {
 #ifdef USE_OPENGL
     void * (*OpenGLLoadProcedure)(const char * Name);
 #endif
+    
+    // NOTE(Abi): Module Pointers
     void * Zen2D;
     void * Zen3D;
 };
