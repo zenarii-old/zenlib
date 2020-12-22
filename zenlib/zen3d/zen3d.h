@@ -1,5 +1,6 @@
 typedef struct zen3d       zen3d;
 typedef struct static_mesh static_mesh;
+typedef struct camera      camera;
 
 global zen3d * Zen3D;
 

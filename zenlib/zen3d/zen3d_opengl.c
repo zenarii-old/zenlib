@@ -51,6 +51,17 @@ Zen3DOpenGLLoadShader(const char * Name, const char * VertexSource, const char *
 }
 
 //
+// ~
+//
+
+internal void
+Zen3DSetActiveCamera(camera * Camera) {
+    Zen3D->ActiveRequest = &Zen3D->Requests[Zen3D->RequestCount++];
+    Zen3D->ActiveRequest->Type = ZEN3D_REQUEST_SET_CAMERA;
+    Zen3D->ActiveRequest->Data = Camera;
+}
+
+//
 // ~Meshes
 //
 
@@ -191,7 +202,10 @@ Zen3DBeginFrame() {
     Zen3D->RequestCount = 0;
     Zen3D->ActiveRequest = 0;
     // TODO(Abi): Clear framebuffer colour/depth
-    
+    {
+        Zen3D->RendererWidth  = Platform->ScreenWidth;
+        Zen3D->RendererHeight = Platform->ScreenHeight;
+    }
     // TEMP(Abi);
     glClearColor(0.f, 0.f, 0.f, 0.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -199,6 +213,10 @@ Zen3DBeginFrame() {
 
 internal void
 Zen3DEndFrame() {
+    // TEMP(Abi): delete when have a uniform buffer
+    {
+        glUseProgram(Zen3D->Shaders[ZEN3D_SHADER_RGBA]);
+    }
     glEnable(GL_DEPTH_TEST);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     Assert(Zen3D->RequestCount < ZEN3D_MAX_REQUESTS);
@@ -218,10 +236,28 @@ Zen3DEndFrame() {
                 glBindVertexArray(0);
             } break;
             
+            case ZEN3D_REQUEST_SET_CAMERA: {
+                camera * Camera = Request->Data;
+                f32 Ratio = Zen3D->RendererWidth/Zen3D->RendererHeight;
+                matrix4x4 Projection = PerspectiveMatrix(0.5f*PI, Ratio, 0.1f, 100.f);
+                matrix4x4 View;
+                if(Camera->Mode == CAMERA_MODE_LOOK_AT) {
+                    View = LookAt(Camera->Position, Camera->Target, v3(0.f, 1.f, 0.f));
+                }
+                else {
+                    View = LookAt(Camera->Position, 
+                                  AddV3(Camera->Position, Camera->Target), 
+                                  v3(0.f, 1.f, 0.f));
+                }
+                matrix4x4 VP = MultM4M4(Projection, View);
+                GLuint VPLocation = glGetUniformLocation(Zen3D->Shaders[0], "VP");
+                glUniformMatrix4fv(VPLocation, 1, GL_TRUE, &VP.Elements[0][0]);
+            } break;
+            
             // TODO(Abi): No batching for static objects yet.
             case ZEN3D_REQUEST_STATIC_MESH: {
                 glUseProgram(Zen3D->Shaders[ZEN3D_SHADER_RGBA]); //mesh shader?
-                static_mesh * Mesh = Request->Data;
+                static_mesh * Mesh = Request->Data; // TODO(Abi): check this works when deleting mesh.
                 glBindVertexArray(Mesh->VAO);
                 glDrawArrays(GL_TRIANGLES, 0, Mesh->VerticesCount);
                 glBindVertexArray(0);

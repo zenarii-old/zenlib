@@ -26,6 +26,7 @@ typedef enum zen3d_request_type zen3d_request_type;
 enum zen3d_request_type {
     ZEN3D_REQUEST_RGBA,
     ZEN3D_REQUEST_STATIC_MESH,
+    ZEN3D_REQUEST_SET_CAMERA,
     
     ZEN3D_REQUEST_COUNT
 };
@@ -65,4 +66,17 @@ struct zen3d {
 struct static_mesh {
     u32 VAO, VBO;
     u32 VerticesCount;
+};
+
+typedef enum camera_mode camera_mode;
+enum camera_mode {
+    CAMERA_MODE_LOOK_AT,
+    CAMERA_MODE_COUNT
+};
+
+struct camera {
+    camera_mode Mode;
+    v3 Position;
+    v3 Target;
+    f32 fov;
 };
