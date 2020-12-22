@@ -11,7 +11,7 @@ LinuxLoadFile(const char * Path, b32 Temporary) {
     memory_arena * Arena = Temporary ? 
         &GlobalPlatform.ScratchArena : &GlobalPlatform.PermenantArena;
     
-    char * Buffer = MemoryArenaAlloc(Arena, sizeof(char) * (BytesRead + 1));
+    char * Buffer = MemoryArenaAlloc(Arena, sizeof(char) * BytesRead);
     if(Buffer == 0) return 0;
     
     fread(Buffer, sizeof(char), BytesRead, File);

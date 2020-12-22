@@ -117,6 +117,24 @@ TranslationMatrixV3(v3 v) {
 }
 
 internal inline matrix4x4
+FrustrumMatrix(f32 Width, f32 Height, f32 Near, f32 Far) {
+    f32 Diff = Far - Near;
+    matrix4x4 Result = Matrix4x4((Near*2.f)/Width,  0.f, 0.f, 0.f,
+                                 0.f, (Near*2.f)/Height, 0.f, 0.f,
+                                 0.f, 0.f, -(Far+Near)/Diff, -(Far*Near*2.f)/Diff,
+                                 0.f, 0.f, -1.f, 0.f);
+    return Result;
+}
+
+internal inline matrix4x4
+PerspectiveMatrix(f32 Angle, f32 Aspect, f32 Near, f32 Far) {
+    f32 Height = 2.f * Near * tan(Angle * 0.5f);
+    f32 Width = Height * Aspect;
+    matrix4x4 Result = FrustrumMatrix(Width, Height, Near, Far);
+    return Result;
+}
+
+internal inline matrix4x4
 LookAt(v3 Eye, v3 Target, v3 Up) {
     matrix4x4 Result = {0};
     
