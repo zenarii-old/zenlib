@@ -1,7 +1,7 @@
 #!/bin/bash
 error_flags="-Werror -Wall -Wno-unused-function"
 defines="-DINTERNAL_BUILD -DBUILD_LINUX -DUSE_OPENGL"
-modules="-DZEN2D -DZEN3D"
+modules="-DZEN3D -DZEN2D"
 mkdir -p build
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 echo [ZenBuild] Generating Shaders

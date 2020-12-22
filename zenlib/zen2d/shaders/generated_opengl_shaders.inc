@@ -134,7 +134,17 @@ zen2d_shader_info ShaderInfo[] = {
 		"out vec4 FragColour;\n" \
 		"\n" \
 		"void main() {\n" \
+		"	/*\n" \
+		"	if(texture(ScreenTexture, fTextureCoords).a < 0.1) {\n" \
+		"		FragColour = vec4(1.0);\n" \
+		"	}\n" \
+		"	else if(texture(ScreenTexture, fTextureCoords).a > 0.9) {\n" \
+		"		FragColour = vec4(1.0, 0.0, 0.0, 1.0);\n" \
+		"	}*/\n" \
+		"\n" \
+		"	\n" \
 		"    FragColour = texture(ScreenTexture, fTextureCoords);\n" \
+		"	\n" \
 		"}\n"
 	},
 	{

@@ -585,6 +585,8 @@ Zen2DBeginFrame() {
         glClearColor(0.f, 0.f, 0.f, 0.f);
         glClear(GL_COLOR_BUFFER_BIT);
         OpenGLBindFramebuffer(0);
+        glClearColor(1.f, 1.f, 1.f, 1.f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
     
     // NOTE(Abi): Reset the memory from the previous frame
@@ -603,6 +605,7 @@ Zen2DBeginFrame() {
 internal void
 Zen2DEndFrame() {
     // IDEA(Abi): could always have MAIN framebuffer bound, and only reset at the end of the blur/other effects?
+    
     glDisable(GL_DEPTH);
     for(i32 i = 0; i < Zen2D->BatchesCount; ++i) {
         zen2d_batch * Batch = &Zen2D->Batches[i];
@@ -703,13 +706,13 @@ Zen2DEndFrame() {
     
     // NOTE(Abi) Copy main framebuffer to the default one.
     // ugh
-    if(Zen2D->BatchesCount > 0) {
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-        glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_FBO_BLIT]);
-        glBindTexture(GL_TEXTURE_2D, Zen2D->Framebuffer[ZEN2D_FBO_MAIN].Texture);
-        glBindVertexArray(Zen2D->FramebufferBlit.VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-        glBindVertexArray(0);
-    }
+    
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_FBO_BLIT]);
+    glBindTexture(GL_TEXTURE_2D, Zen2D->Framebuffer[ZEN2D_FBO_MAIN].Texture);
+    glBindVertexArray(Zen2D->FramebufferBlit.VAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(0);
+    
 }
