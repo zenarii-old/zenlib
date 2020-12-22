@@ -14,10 +14,18 @@
 // is a type of request so change in end frame too
 // when pushing meshes then use glUseProgram(Zen3D->ActiveCustomShader)
 // use a similar push camera
+typedef enum zen3d_shader_type zen3d_shader_type;
+enum zen3d_shader_type {
+    ZEN3D_SHADER_RGBA,
+    
+    ZEN3D_SHADER_COUNT,
+};
+
 
 typedef enum zen3d_request_type zen3d_request_type;
 enum zen3d_request_type {
-    ZEN3D_REQUEST_STANDARD,
+    ZEN3D_REQUEST_RGBA,
+    ZEN3D_REQUEST_STATIC_MESH,
     
     ZEN3D_REQUEST_COUNT
 };
@@ -33,7 +41,7 @@ struct zen3d_request {
 struct zen3d {
     ZEN3D_COMMON;
     
-    GLuint Shaders[ZEN3D_REQUEST_COUNT];
+    GLuint Shaders[ZEN3D_SHADER_COUNT];
     GLuint GeneralVAO;
     
     struct { \
@@ -49,13 +57,12 @@ struct zen3d {
     zen3d_request * ActiveRequest;
     zen3d_request   Requests[ZEN3D_MAX_REQUESTS];
     u32 RequestCount;
-};
-/*
-typedef struct mesh mesh;
-struct mesh {
-    GLuint Shader;
     
-    v3 * Vertices;
-    v4 * Colours;
+    framebuffer Framebuffer;
 };
-*/
+
+
+struct static_mesh {
+    u32 VAO, VBO;
+    u32 VerticesCount;
+};

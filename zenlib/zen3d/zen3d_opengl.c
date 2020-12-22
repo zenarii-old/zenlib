@@ -4,8 +4,6 @@
 // TODO(Abi): unify this into zencore_opengl.c
 internal u32
 Zen3DOpenGLLoadShader(const char * Name, const char * VertexSource, const char * FragmentSource) {
-    
-    
     u32 Shader = 0;
     b32 SuccessfulCompilation = 0;
     char InfoLog[512] = {0};
@@ -51,10 +49,56 @@ Zen3DOpenGLLoadShader(const char * Name, const char * VertexSource, const char *
     
     return Shader;
 }
+
 //
-// ~Uniform functions
+// ~Meshes
 //
-// TODO(Abi): Uniform buffer object for view and projection (could mult before sending?)
+
+internal static_mesh
+Zen3DStaticMeshFromData(u32 Count, v3 * Vertices, v4 * Colours) {
+    u32 FLOAT_NUM = 7;
+    
+    static_mesh Mesh = {0};
+    {
+        glGenVertexArrays(1, &Mesh.VAO);
+        glBindVertexArray(Mesh.VAO);
+        
+        glGenBuffers(1, &Mesh.VBO);
+        glBindBuffer(GL_ARRAY_BUFFER, Mesh.VBO);
+        
+        OpenGLAddFloatAttribute(0, 3, FLOAT_NUM, 0);
+        OpenGLAddFloatAttribute(1, 4, FLOAT_NUM, 3);
+    }
+    
+    // NOTE(Abi): Copy the data across
+    f32 * Data = MemoryArenaAlloc(&Platform->ScratchArena, FLOAT_NUM * sizeof(f32) * Count);
+    for(i32 i = 0; i < Count; ++i) {
+        i32 k = 0;
+        Data[i * FLOAT_NUM + k++] = Vertices[i].x;
+        Data[i * FLOAT_NUM + k++] = Vertices[i].y;
+        Data[i * FLOAT_NUM + k++] = Vertices[i].z;
+        
+        Data[i * FLOAT_NUM + k++] = Colours[i].x;
+        Data[i * FLOAT_NUM + k++] = Colours[i].y;
+        Data[i * FLOAT_NUM + k++] = Colours[i].z;
+        Data[i * FLOAT_NUM + k++] = Colours[i].w;
+    }
+    
+    Mesh.VerticesCount = Count;
+    
+    
+    glBufferData(GL_ARRAY_BUFFER, Count * FLOAT_NUM * sizeof(f32), Data, GL_STATIC_DRAW);
+    glBindVertexArray(0);
+    
+    return Mesh;
+}
+
+internal void
+Zen3DPushStaticMesh(static_mesh * Mesh) {
+    Zen3D->ActiveRequest = &Zen3D->Requests[Zen3D->RequestCount++];
+    Zen3D->ActiveRequest->Type = ZEN3D_REQUEST_STATIC_MESH;
+    Zen3D->ActiveRequest->Data = Mesh;
+}
 
 //
 // ~Shape Drawing
@@ -65,9 +109,9 @@ internal void
 Zen3DPushQuad(v3 p0, v3 p1, v3 p2, v3 p3, v4 Colour) {
     Assert((Zen3D->Shapes.AllocPos/Zen3D->Shapes.Size) + 6 < Zen3D->Shapes.Max);
     
-    if(!Zen3D->ActiveRequest || Zen3D->ActiveRequest->Type != ZEN3D_REQUEST_STANDARD) {
+    if(!Zen3D->ActiveRequest || Zen3D->ActiveRequest->Type != ZEN3D_REQUEST_RGBA) {
         Zen3D->ActiveRequest = &Zen3D->Requests[Zen3D->RequestCount++];
-        Zen3D->ActiveRequest->Type = ZEN3D_REQUEST_STANDARD;
+        Zen3D->ActiveRequest->Type = ZEN3D_REQUEST_RGBA;
         
         Zen3D->ActiveRequest->Data = Zen3D->Shapes.Memory + Zen3D->Shapes.AllocPos;
         Zen3D->ActiveRequest->DataLength = 0;
@@ -104,6 +148,8 @@ Zen3DPushQuad(v3 p0, v3 p1, v3 p2, v3 p3, v4 Colour) {
 
 internal void
 Zen3DInit(memory_arena * Arena) {
+    glEnable(GL_BLEND);
+    
     {
         Zen3D->Shapes.Stride = sizeof(f32) * 7;
         // NOTE(Abi): Since made of triangles.
@@ -132,8 +178,11 @@ Zen3DInit(memory_arena * Arena) {
     VSource = Platform->LoadFile("vert.glsl", 1);
     FSource = Platform->LoadFile("frag.glsl", 1);
     
-    Zen3D->Shaders[0] = Zen3DOpenGLLoadShader("text", VSource, FSource);
+    Zen3D->Shaders[ZEN3D_SHADER_RGBA] = Zen3DOpenGLLoadShader("text", VSource, FSource);
+    Zen3D->Framebuffer = OpenGLCreateFramebuffer(Platform->ScreenWidth, Platform->ScreenHeight);
     //Log("\n%s\n---\n%s", VSource, FSource);
+    fprintf(stderr, "[Zen3D] Loaded\n");
+    
 }
 
 internal void
@@ -144,22 +193,21 @@ Zen3DBeginFrame() {
     // TODO(Abi): Clear framebuffer colour/depth
     
     // TEMP(Abi);
-    
-    
+    glClearColor(0.f, 0.f, 0.f, 0.f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 internal void
 Zen3DEndFrame() {
+    glEnable(GL_DEPTH_TEST);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     Assert(Zen3D->RequestCount < ZEN3D_MAX_REQUESTS);
-    
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glClear(GL_DEPTH_BUFFER_BIT);
     for(i32 idx = 0; idx < Zen3D->RequestCount; ++idx) {
         zen3d_request * Request = &Zen3D->Requests[idx];
         
         switch(Request->Type) {
-            case ZEN3D_REQUEST_STANDARD: {
-                glUseProgram(Zen3D->Shaders[0]);
+            case ZEN3D_REQUEST_RGBA: {
+                glUseProgram(Zen3D->Shaders[ZEN3D_SHADER_RGBA]);
                 glBindVertexArray(Zen3D->Shapes.VAO);
                 {
                     glBindBuffer(GL_ARRAY_BUFFER, Zen3D->Shapes.VBO);
@@ -170,9 +218,30 @@ Zen3DEndFrame() {
                 glBindVertexArray(0);
             } break;
             
+            // TODO(Abi): No batching for static objects yet.
+            case ZEN3D_REQUEST_STATIC_MESH: {
+                glUseProgram(Zen3D->Shaders[ZEN3D_SHADER_RGBA]); //mesh shader?
+                static_mesh * Mesh = Request->Data;
+                glBindVertexArray(Mesh->VAO);
+                glDrawArrays(GL_TRIANGLES, 0, Mesh->VerticesCount);
+                glBindVertexArray(0);
+            } break;
+            
             default: Assert("[Zen3D] Request had an invalid type" == 0);
         }
     }
+#ifdef ZEN2D
+    //glBindFramebuffer(GL_FRAMEBUFFER, Zen2D->Framebuffer[ZEN2D_FBO_MAIN].ID);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_FBO_BLIT]);
+    glBindTexture(GL_TEXTURE_2D, Zen3D->Framebuffer.Texture);
+    glBindVertexArray(Zen2D->FramebufferBlit.VAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(0);
+#else
     
+#endif
     glDisable(GL_DEPTH_TEST);
+    
 }

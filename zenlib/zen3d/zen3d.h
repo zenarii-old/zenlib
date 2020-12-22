@@ -1,5 +1,5 @@
-typedef struct zen3d     zen3d;
-typedef struct texture3d texture3d;
+typedef struct zen3d       zen3d;
+typedef struct static_mesh static_mesh;
 
 global zen3d * Zen3D;
 
