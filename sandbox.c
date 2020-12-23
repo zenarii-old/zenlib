@@ -13,101 +13,17 @@ internal void
 AppInit() {
     fprintf(stderr, "[App] Loaded\n");
     Platform->Core = MemoryArenaAlloc(&Platform->PermenantArena, sizeof(core));
+    
     f32 Vertices[] = {
-        -1.0f,-1.0f,-1.0f, // triangle 1 : begin
-        -1.0f,-1.0f, 1.0f,
-        -1.0f, 1.0f, 1.0f, // triangle 1 : end
-        
-        1.0f, 1.0f,-1.0f, // triangle 2 : begin
-        -1.0f,-1.0f,-1.0f,
-        -1.0f, 1.0f,-1.0f, // triangle 2 : end
-        
-        1.0f,-1.0f, 1.0f,
-        -1.0f,-1.0f,-1.0f,
-        1.0f,-1.0f,-1.0f,
-        
-        1.0f, 1.0f,-1.0f,
-        1.0f,-1.0f,-1.0f,
-        -1.0f,-1.0f,-1.0f,
-        
-        -1.0f,-1.0f,-1.0f,
-        -1.0f, 1.0f, 1.0f,
-        -1.0f, 1.0f,-1.0f,
-        
-        1.0f,-1.0f, 1.0f,
-        -1.0f,-1.0f, 1.0f,
-        -1.0f,-1.0f,-1.0f,
-        
-        -1.0f, 1.0f, 1.0f,
-        -1.0f,-1.0f, 1.0f,
-        1.0f,-1.0f, 1.0f,
-        
-        1.0f, 1.0f, 1.0f,
-        1.0f,-1.0f,-1.0f,
-        1.0f, 1.0f,-1.0f,
-        
-        1.0f,-1.0f,-1.0f,
-        1.0f, 1.0f, 1.0f,
-        1.0f,-1.0f, 1.0f,
-        
-        1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f,-1.0f,
-        -1.0f, 1.0f,-1.0f,
-        1.0f, 1.0f, 1.0f,
-        -1.0f, 1.0f,-1.0f,
-        -1.0f, 1.0f, 1.0f,
-        1.0f, 1.0f, 1.0f,
-        -1.0f, 1.0f, 1.0f,
-        1.0f,-1.0f, 1.0f
+        0.f, 0.f, 0.f,
+        1.f, 1.f, 0.f,
+        1.f, 0.f, 0.f,
     };
+    
     f32 Colours[] = {
-        0.8, 0.2f, 7.f, 1.f,
-        0.8, 0.2f, 7.f, 1.f,
-        0.8, 0.2f, 7.f, 1.f,
-        
         0.f, 1.f, 1.f, 1.f,
         0.f, 1.f, 1.f, 1.f,
         0.f, 1.f, 1.f, 1.f,
-        
-        0.8, 0.2f, 7.f, 1.f,
-        0.8, 0.2f, 7.f, 1.f,
-        0.8, 0.2f, 7.f, 1.f,
-        
-        0.f, 1.f, 1.f, 1.f,
-        0.f, 1.f, 1.f, 1.f,
-        0.f, 1.f, 1.f, 1.f,
-        
-        0.8, 0.2f, 7.f, 1.f,
-        0.8, 0.2f, 7.f, 1.f,
-        0.8, 0.2f, 7.f, 1.f,
-        
-        0.8, 0.2f, 7.f, 1.f,
-        0.8, 0.2f, 7.f, 1.f,
-        0.8, 0.2f, 7.f, 1.f,
-        
-        0.8, 0.2f, 7.f, 1.f,
-        0.8, 0.2f, 7.f, 1.f,
-        0.8, 0.2f, 7.f, 1.f,
-        
-        1.f, 0.f, 1.f, 1.f,
-        1.f, 0.f, 1.f, 1.f,
-        1.f, 0.f, 1.f, 1.f,
-        
-        1.f, 0.f, 1.f, 1.f,
-        1.f, 0.f, 1.f, 1.f,
-        1.f, 0.f, 1.f, 1.f,
-        
-        0.8, 0.2f, 7.f, 1.f,
-        0.8, 0.2f, 7.f, 1.f,
-        0.8, 0.2f, 7.f, 1.f,
-        
-        0.8, 0.2f, 7.f, 1.f,
-        0.8, 0.2f, 7.f, 1.f,
-        0.8, 0.2f, 7.f, 1.f,
-        
-        0.8, 0.2f, 7.f, 1.f,
-        0.8, 0.2f, 7.f, 1.f,
-        0.8, 0.2f, 7.f, 1.f,
     };
     
     Platform->Core->Mesh = Zen3DStaticMeshFromData(sizeof(Vertices)/sizeof(v3), (v3 *)Vertices, (v4 *)Colours);
@@ -131,6 +47,7 @@ AppUpdate() {
     Zen3DSetActiveCamera(&Camera);
     
     Zen3DPushStaticMesh(&Platform->Core->Mesh);
+    Zen2DPushBlur(v4(Platform->ScreenWidth/2 - 50, Platform->ScreenHeight/2 - 50, 100, 100));
     
     Zen2DPushRect(v4(100, 100, 100, 100), v4(sin(t), 0.f, 1.f, 1.f));
     char * String = "2D/3D Test";

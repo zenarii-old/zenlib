@@ -114,7 +114,6 @@ Zen3DPushStaticMesh(static_mesh * Mesh) {
 // ~Shape Drawing
 //
 
-// TODO(Abi): Figure out the required order of p0, p1, p2, p3
 internal void
 Zen3DPushQuad(v3 p0, v3 p1, v3 p2, v3 p3, v4 Colour) {
     Assert((Zen3D->Shapes.AllocPos/Zen3D->Shapes.Size) + 6 < Zen3D->Shapes.Max);
@@ -190,6 +189,8 @@ Zen3DInit(memory_arena * Arena) {
         Zen3D->Shaders[i] = Zen3DOpenGLLoadShader(ShaderInfo[i].Name, ShaderInfo[i].VertexSource, ShaderInfo[i].FragmentSource);
     }
     
+    Zen3D->Framebuffer = OpenGLCreateFramebuffer(Platform->ScreenWidth, Platform->ScreenHeight);
+    
     fprintf(stderr, "[Zen3D] Loaded\n");
 }
 
@@ -205,13 +206,18 @@ Zen3DBeginFrame() {
         Zen3D->RendererHeight = Platform->ScreenHeight;
     }
     // TEMP(Abi);
+    OpenGLBindFramebuffer(&Zen3D->Framebuffer);
     glClearColor(0.f, 0.f, 0.f, 0.f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    OpenGLBindFramebuffer(0);
+    glClearColor(0.f, 0.f, 0.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 internal void
 Zen3DEndFrame() {
     // TEMP(Abi): delete when have a uniform buffer
+    OpenGLBindFramebuffer(&Zen3D->Framebuffer);
     {
         glUseProgram(Zen3D->Shaders[ZEN3D_SHADER_RGBA]);
     }
@@ -265,17 +271,30 @@ Zen3DEndFrame() {
             default: Assert("[Zen3D] Request had an invalid type" == 0);
         }
     }
-#ifdef ZEN2D
-    //glBindFramebuffer(GL_FRAMEBUFFER, Zen2D->Framebuffer[ZEN2D_FBO_MAIN].ID);
-    //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    //glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_FBO_BLIT]);
-    //glBindTexture(GL_TEXTURE_2D, Zen3D->Framebuffer.Texture);
-    //glBindVertexArray(Zen2D->FramebufferBlit.VAO);
-    //glDrawArrays(GL_TRIANGLES, 0, 6);
-    //glBindVertexArray(0);
-#else
     
+#ifndef ZEN2D
+    OpenGLBindFramebuffer(0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_FBO_BLIT]);
+    glBindTexture(GL_TEXTURE_2D, Zen3D->Framebuffer.Texture);
+    glBindVertexArray(Zen2D->FramebufferBlit.VAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(0);
+#else
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, Zen3D->Framebuffer.ID);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, Zen2D->Framebuffer[ZEN2D_FBO_MAIN].ID);
+    
+    glBlitFramebuffer(0,
+                      0,
+                      Platform->ScreenWidth,
+                      Platform->ScreenHeight,
+                      0,
+                      0,
+                      Platform->ScreenWidth,
+                      Platform->ScreenHeight,
+                      GL_COLOR_BUFFER_BIT,
+                      GL_NEAREST);
 #endif
     glDisable(GL_DEPTH_TEST);
-    
 }

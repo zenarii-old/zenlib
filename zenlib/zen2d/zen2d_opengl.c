@@ -606,7 +606,6 @@ internal void
 Zen2DEndFrame() {
     // IDEA(Abi): could always have MAIN framebuffer bound, and only reset at the end of the blur/other effects?
     
-    glDisable(GL_DEPTH);
     for(i32 i = 0; i < Zen2D->BatchesCount; ++i) {
         zen2d_batch * Batch = &Zen2D->Batches[i];
         switch(Batch->Type) {
