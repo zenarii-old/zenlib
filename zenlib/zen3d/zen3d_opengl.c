@@ -50,7 +50,7 @@ Zen3DOpenGLLoadShader(const char * Name, const char * VertexSource, const char *
 }
 
 //
-// ~
+// ~State
 //
 
 internal void
@@ -58,6 +58,27 @@ Zen3DSetActiveCamera(camera * Camera) {
     Zen3D->ActiveRequest = &Zen3D->Requests[Zen3D->RequestCount++];
     Zen3D->ActiveRequest->Type = ZEN3D_REQUEST_SET_CAMERA;
     Zen3D->ActiveRequest->Data = Camera;
+}
+
+internal void
+Zen3DEnable(zen3d_capability Cap) {
+    Zen3D->ActiveRequest = &Zen3D->Requests[Zen3D->RequestCount++];
+    Zen3D->ActiveRequest->Type = ZEN3D_REQUEST_ENABLE;
+    Zen3D->ActiveRequest->Data = (void *)Cap;
+}
+
+internal void
+Zen3DDisable(zen3d_capability Cap) {
+    Zen3D->ActiveRequest = &Zen3D->Requests[Zen3D->RequestCount++];
+    Zen3D->ActiveRequest->Type = ZEN3D_REQUEST_DISABLE;
+    Zen3D->ActiveRequest->Data = (void *)Cap;
+}
+
+internal void
+Zen3DPolyMode(zen3d_poly_mode Mode) {
+    Zen3D->ActiveRequest = &Zen3D->Requests[Zen3D->RequestCount++];
+    Zen3D->ActiveRequest->Type = ZEN3D_REQUEST_POLYMODE;
+    Zen3D->ActiveRequest->Data = (void *)Mode;
 }
 
 //
@@ -113,6 +134,30 @@ Zen3DPushStaticMesh(static_mesh * Mesh) {
 //
 // ~Shape Drawing
 //
+
+internal void
+Zen3DPushLine(v3 p0, v3 p1, v4 Colour) {
+    Assert((Zen3D->Shapes.AllocPos/Zen3D->Shapes.Size) + 6 < Zen3D->Shapes.Max);
+    
+    if(!Zen3D->ActiveRequest || Zen3D->ActiveRequest->Type != ZEN3D_REQUEST_RGBA) {
+        Zen3D->ActiveRequest = &Zen3D->Requests[Zen3D->RequestCount++];
+        Zen3D->ActiveRequest->Type = ZEN3D_REQUEST_LINE;
+        
+        Zen3D->ActiveRequest->Data = Zen3D->Shapes.Memory + Zen3D->Shapes.AllocPos;
+        Zen3D->ActiveRequest->DataLength = 0;
+    }
+    
+    GLubyte * Data = Zen3D->Shapes.Memory + Zen3D->Shapes.AllocPos;
+    {
+        *(v3 *)((f32 *)(Data)+0)  = p0;
+        *(v4 *)((f32 *)(Data)+3)  = Colour;
+        
+        *(v3 *)((f32 *)(Data)+7)  = p1;
+        *(v4 *)((f32 *)(Data)+10) = Colour;
+    }
+    Zen3D->Shapes.AllocPos += Zen3D->Shapes.Stride * 2;
+    Zen3D->ActiveRequest->DataLength += Zen3D->Shapes.Stride * 2;
+}
 
 internal void
 Zen3DPushQuad(v3 p0, v3 p1, v3 p2, v3 p3, v4 Colour) {
@@ -251,6 +296,18 @@ Zen3DEndFrame() {
                 glBindVertexArray(0);
             } break;
             
+            case ZEN3D_REQUEST_LINE: {
+                glUseProgram(Zen3D->Shaders[ZEN3D_SHADER_RGBA]);
+                glBindVertexArray(Zen3D->Shapes.VAO);
+                {
+                    glBindBuffer(GL_ARRAY_BUFFER, Zen3D->Shapes.VBO);
+                    glBufferSubData(GL_ARRAY_BUFFER, 0, Request->DataLength, Request->Data);
+                    i32 Count = Request->DataLength/Zen3D->Shapes.Stride;
+                    glDrawArrays(GL_LINES, 0, Count);
+                }
+                glBindVertexArray(0);
+            }
+            
             case ZEN3D_REQUEST_SET_CAMERA: {
                 camera * Camera = Request->Data;
                 f32 Ratio = Zen3D->RendererWidth/Zen3D->RendererHeight;
@@ -269,6 +326,29 @@ Zen3DEndFrame() {
                 glBindBuffer(GL_UNIFORM_BUFFER, Zen3D->UBO);
                 glBufferSubData(GL_UNIFORM_BUFFER, 0, 64, &VP.Elements[0][0]); 
                 glBindBuffer(GL_UNIFORM_BUFFER, 0);
+            } break;
+            
+            case ZEN3D_REQUEST_POLYMODE: {
+                zen3d_poly_mode Mode = (uintptr_t)Request->Data;
+                switch(Mode) {
+                    case ZEN3D_WIREFRAME: glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);  break;
+                    case ZEN3D_POINTS:    glPolygonMode(GL_FRONT_AND_BACK, GL_POINT); break;
+                    case ZEN3D_FILLED:    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);  break;
+                }
+            } break;
+            
+            case ZEN3D_REQUEST_ENABLE: {
+                zen3d_capability Cap = (uintptr_t)Request->Data;
+                switch(Cap) {
+                    case ZEN3D_DEPTH: glEnable(GL_DEPTH_TEST); break;
+                }
+            } break;
+            
+            case ZEN3D_REQUEST_DISABLE: {
+                zen3d_capability Cap = (uintptr_t)Request->Data;
+                switch(Cap) {
+                    case ZEN3D_DEPTH: glDisable(GL_DEPTH_TEST); break;
+                }
             } break;
             
             // TODO(Abi): No batching for static objects yet.

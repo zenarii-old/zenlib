@@ -1,6 +1,5 @@
 #ifndef ZEN2D_H
 #define ZEN2D_H
-
 // NOTE(Abi): defined in the relevant zen2d_<renderer>.h
 typedef struct zen2d      zen2d;
 typedef struct texture    texture;

@@ -6,6 +6,7 @@ global zen3d * Zen3D;
 
 #define ZEN3D_COMMON \
 struct { \
+camera * ActiveCamera; \
 f32 RendererWidth; \
 f32 RendererHeight; \
 };

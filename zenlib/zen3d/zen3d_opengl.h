@@ -32,8 +32,12 @@ enum zen3d_shader_type {
 typedef enum zen3d_request_type zen3d_request_type;
 enum zen3d_request_type {
     ZEN3D_REQUEST_RGBA,
+    ZEN3D_REQUEST_LINE,
     ZEN3D_REQUEST_STATIC_MESH,
     ZEN3D_REQUEST_SET_CAMERA,
+    ZEN3D_REQUEST_POLYMODE,
+    ZEN3D_REQUEST_ENABLE,
+    ZEN3D_REQUEST_DISABLE,
     
     ZEN3D_REQUEST_COUNT
 };
@@ -44,6 +48,19 @@ struct zen3d_request {
     
     void * Data;
     u32 DataLength;
+};
+
+typedef enum zen3d_poly_mode zen3d_poly_mode;
+enum zen3d_poly_mode {
+    ZEN3D_POINTS,
+    ZEN3D_WIREFRAME,
+    ZEN3D_FILLED,
+};
+
+typedef enum zen3d_capability zen3d_capability;
+enum zen3d_capability {
+    ZEN3D_DEPTH,
+    // TODO(Abi): fill this out
 };
 
 struct zen3d {
