@@ -6,7 +6,9 @@ zen3d_shader_info ShaderInfo[] = {
 		"layout(location = 0) in vec3 inPosition;\n" \
 		"layout(location = 1) in vec4 inColour;\n" \
 		"\n" \
-		"uniform mat4 VP;\n" \
+		"layout(std140) uniform Matrices {\n" \
+		"	mat4 VP;\n" \
+		"};\n" \
 		"\n" \
 		"out vec4 fColour;\n" \
 		"\n" \

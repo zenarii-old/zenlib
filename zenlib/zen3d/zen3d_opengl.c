@@ -183,10 +183,20 @@ Zen3DInit(memory_arena * Arena) {
         glBindVertexArray(0);
     }
     
+    // NOTE(Abi): Generate Uniforms
+    glGenBuffers(1, &Zen3D->UBO);
+    glBindBuffer(GL_UNIFORM_BUFFER, Zen3D->UBO);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(f32) * 16, 0, GL_DYNAMIC_DRAW);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, Zen3D->UBO); 
+    //glBindBuffer(GL_UNIFORM_BUFFER, 0); // may be unnecessary
+    
+    
 #include "shaders/generated_opengl_shaders.inc"
     for(i32 i = 0; i < ZEN3D_SHADER_COUNT; ++i) {
         fprintf(stderr, "[Zen3D] Loading '%s' shader.\n", ShaderInfo[i].Name);
         Zen3D->Shaders[i] = Zen3DOpenGLLoadShader(ShaderInfo[i].Name, ShaderInfo[i].VertexSource, ShaderInfo[i].FragmentSource);
+        i32 idx = glGetUniformBlockIndex(Zen3D->Shaders[i], "Matrices");
+        glUniformBlockBinding(Zen3D->Shaders[i], idx, 0);
     }
     
     Zen3D->Framebuffer = OpenGLCreateFramebuffer(Platform->ScreenWidth, Platform->ScreenHeight);
@@ -244,7 +254,7 @@ Zen3DEndFrame() {
             case ZEN3D_REQUEST_SET_CAMERA: {
                 camera * Camera = Request->Data;
                 f32 Ratio = Zen3D->RendererWidth/Zen3D->RendererHeight;
-                matrix4x4 Projection = PerspectiveMatrix(0.5f*PI, Ratio, 0.1f, 100.f);
+                matrix4x4 Projection = PerspectiveMatrix(Camera->fov, Ratio, 0.1f, 100.f);
                 matrix4x4 View;
                 if(Camera->Mode == CAMERA_MODE_LOOK_AT) {
                     View = LookAt(Camera->Position, Camera->Target, v3(0.f, 1.f, 0.f));
@@ -254,9 +264,11 @@ Zen3DEndFrame() {
                                   AddV3(Camera->Position, Camera->Target), 
                                   v3(0.f, 1.f, 0.f));
                 }
-                matrix4x4 VP = MultM4M4(Projection, View);
-                GLuint VPLocation = glGetUniformLocation(Zen3D->Shaders[0], "VP");
-                glUniformMatrix4fv(VPLocation, 1, GL_TRUE, &VP.Elements[0][0]);
+                // NOTE(Abi): Since OpenGL uses column-major matrices, have to take transpose.
+                matrix4x4 VP = TransposeMatrix(MultM4M4(Projection, View));
+                glBindBuffer(GL_UNIFORM_BUFFER, Zen3D->UBO);
+                glBufferSubData(GL_UNIFORM_BUFFER, 0, 64, &VP.Elements[0][0]); 
+                glBindBuffer(GL_UNIFORM_BUFFER, 0);
             } break;
             
             // TODO(Abi): No batching for static objects yet.

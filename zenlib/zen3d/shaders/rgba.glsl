@@ -4,7 +4,9 @@
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec4 inColour;
 
-uniform mat4 VP;
+layout(std140) uniform Matrices {
+	mat4 VP;
+};
 
 out vec4 fColour;
 

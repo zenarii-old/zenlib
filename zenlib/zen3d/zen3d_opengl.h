@@ -49,6 +49,7 @@ struct zen3d_request {
 struct zen3d {
     ZEN3D_COMMON;
     
+    GLuint UBO;
     GLuint Shaders[ZEN3D_SHADER_COUNT];
     GLuint GeneralVAO;
     
@@ -68,7 +69,6 @@ struct zen3d {
     
     framebuffer Framebuffer;
 };
-
 
 struct static_mesh {
     u32 VAO, VBO;
