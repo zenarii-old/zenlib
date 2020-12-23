@@ -14,6 +14,13 @@
 // is a type of request so change in end frame too
 // when pushing meshes then use glUseProgram(Zen3D->ActiveCustomShader)
 // use a similar push camera
+typedef struct zen3d_shader_info zen3d_shader_info;
+struct zen3d_shader_info {
+    char * Name;
+    char * VertexSource;
+    char * FragmentSource;
+};
+
 typedef enum zen3d_shader_type zen3d_shader_type;
 enum zen3d_shader_type {
     ZEN3D_SHADER_RGBA,

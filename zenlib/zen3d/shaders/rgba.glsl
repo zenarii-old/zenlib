@@ -1,3 +1,4 @@
+@vertex
 #version 330 core
 
 layout(location = 0) in vec3 inPosition;
@@ -12,3 +13,13 @@ void main() {
 	fColour = inColour;
 }
 
+@fragment
+#version 330 core
+
+in vec4 fColour;
+
+out vec4 FragColour;
+
+void main() {
+	FragColour = fColour;
+}

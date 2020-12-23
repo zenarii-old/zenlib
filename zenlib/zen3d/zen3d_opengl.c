@@ -1,7 +1,6 @@
 //
 // ~Platform Independant OpenGL functions
 //
-// TODO(Abi): unify this into zencore_opengl.c
 internal u32
 Zen3DOpenGLLoadShader(const char * Name, const char * VertexSource, const char * FragmentSource) {
     u32 Shader = 0;
@@ -185,15 +184,13 @@ Zen3DInit(memory_arena * Arena) {
         glBindVertexArray(0);
     }
     
-    char * VSource, * FSource;
-    VSource = Platform->LoadFile("vert.glsl", 1);
-    FSource = Platform->LoadFile("frag.glsl", 1);
+#include "shaders/generated_opengl_shaders.inc"
+    for(i32 i = 0; i < ZEN3D_SHADER_COUNT; ++i) {
+        fprintf(stderr, "[Zen3D] Loading '%s' shader.\n", ShaderInfo[i].Name);
+        Zen3D->Shaders[i] = Zen3DOpenGLLoadShader(ShaderInfo[i].Name, ShaderInfo[i].VertexSource, ShaderInfo[i].FragmentSource);
+    }
     
-    Zen3D->Shaders[ZEN3D_SHADER_RGBA] = Zen3DOpenGLLoadShader("text", VSource, FSource);
-    Zen3D->Framebuffer = OpenGLCreateFramebuffer(Platform->ScreenWidth, Platform->ScreenHeight);
-    //Log("\n%s\n---\n%s", VSource, FSource);
     fprintf(stderr, "[Zen3D] Loaded\n");
-    
 }
 
 internal void
@@ -202,6 +199,7 @@ Zen3DBeginFrame() {
     Zen3D->RequestCount = 0;
     Zen3D->ActiveRequest = 0;
     // TODO(Abi): Clear framebuffer colour/depth
+    
     {
         Zen3D->RendererWidth  = Platform->ScreenWidth;
         Zen3D->RendererHeight = Platform->ScreenHeight;
@@ -217,6 +215,7 @@ Zen3DEndFrame() {
     {
         glUseProgram(Zen3D->Shaders[ZEN3D_SHADER_RGBA]);
     }
+    
     glEnable(GL_DEPTH_TEST);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     Assert(Zen3D->RequestCount < ZEN3D_MAX_REQUESTS);
@@ -268,7 +267,6 @@ Zen3DEndFrame() {
     }
 #ifdef ZEN2D
     //glBindFramebuffer(GL_FRAMEBUFFER, Zen2D->Framebuffer[ZEN2D_FBO_MAIN].ID);
-    //glBindFramebuffer(GL_FRAMEBUFFER, 0);
     //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     //glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_FBO_BLIT]);
     //glBindTexture(GL_TEXTURE_2D, Zen3D->Framebuffer.Texture);

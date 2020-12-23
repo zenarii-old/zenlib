@@ -9,6 +9,10 @@ pushd . &> /dev/null
 cd zenlib/zen2d/shaders
 python generate_opengl_shaders.py
 popd &> /dev/null
+pushd . &> /dev/null
+cd zenlib/zen3d/shaders
+python generate_opengl_shaders.py
+popd &> /dev/null
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 echo [ZenBuild] Building platform layer
 gcc $error_flags $modules $defines -g zenlib/zencore/zencore_linux.c -o build/out -lX11 -lGL -lGLU -lm -ludev -ldl

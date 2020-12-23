@@ -110,7 +110,7 @@ AppInit() {
         0.8, 0.2f, 7.f, 1.f,
     };
     
-    Platform->Core->Mesh = Zen3DStaticMeshFromData(sizeof(Vertices)/sizeof(f32), (v3 *)Vertices, (v4 *)Colours);
+    Platform->Core->Mesh = Zen3DStaticMeshFromData(sizeof(Vertices)/sizeof(v3), (v3 *)Vertices, (v4 *)Colours);
     
     Platform->Core->Font = Zen2DLoadFontFromFNTAndPNG("libmono.fnt", "libmono.png");
     Zen2DSetDefaultFont(&Platform->Core->Font);
@@ -127,15 +127,16 @@ AppUpdate() {
         0.5 * PI
     };
     
-    Camera.Position = v3(4 * sin(t), 0.f, 4 * cos(t));
+    Camera.Position = v3(4 * sin(t), sin(t) * cos(t), 4 * cos(t));
     Zen3DSetActiveCamera(&Camera);
     
     Zen3DPushStaticMesh(&Platform->Core->Mesh);
     
-    Zen2DPushRect(v4(100, 100, 100, 100), v4(1.f, 0.f, 1.f, 1.f));
+    Zen2DPushRect(v4(100, 100, 100, 100), v4(sin(t), 0.f, 1.f, 1.f));
     char * String = "2D/3D Test";
     f32 Width = Zen2DGetStringWidth(String, Zen2DGetDefaultFont(), 32);
     Zen2DPushText(String, v2((Platform->ScreenWidth - Width) * 0.5f, 300), 32);
+    
     if(ZenKeyDown(ZKEY_ESCAPE)) ZenPlatformQuit();
 }
 
