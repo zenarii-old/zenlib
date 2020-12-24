@@ -204,6 +204,7 @@ int main(int argc, char ** argv) {
         GlobalPlatform.LoadFile = LinuxLoadFile;
         GlobalPlatform.HeapAlloc = LinuxHeapAlloc;
         GlobalPlatform.HeapFree = LinuxHeapFree;
+	GlobalPlatform.GetTime = LinuxTimerGetTime;
 #ifdef USE_OPENGL
         GlobalPlatform.OpenGLLoadProcedure = LinuxOpenGLLoadProcedure;
 #endif
