@@ -125,6 +125,13 @@ Zen3DStaticMeshFromData(u32 Count, v3 * Vertices, v4 * Colours) {
 }
 
 internal void
+Zen3DUnloadStaticMesh(static_mesh * Mesh) {
+    glDeleteVertexArrays(1, &Mesh->VAO);
+    glDeleteBuffers(1, &Mesh->VBO);
+    Mesh->VerticesCount = 0;
+}
+
+internal void
 Zen3DPushStaticMesh(static_mesh * Mesh) {
     Zen3D->ActiveRequest = &Zen3D->Requests[Zen3D->RequestCount++];
     Zen3D->ActiveRequest->Type = ZEN3D_REQUEST_STATIC_MESH;
