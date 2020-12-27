@@ -54,6 +54,15 @@ V3Lerp(v3 a, v3 b, f32 t) {
     return a;
 }
 
+internal inline v4
+V4Lerp(v4 a, v4 b, f32 t) {
+    a.x += (b.x - a.x) * t;
+    a.y += (b.y - a.y) * t;
+    a.z += (b.z - a.z) * t;
+    a.w += (b.w - a.w) * t;
+    return a;
+}
+
 //
 // ~Matrices
 //
