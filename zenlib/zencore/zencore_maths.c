@@ -46,6 +46,14 @@ DotV3(v3 a, v3 b) {
     return c.x + c.y + c.z;
 }
 
+internal inline v3
+V3Lerp(v3 a, v3 b, f32 t) {
+    a.x += (b.x - a.x) * t;
+    a.y += (b.y - a.y) * t;
+    a.z += (b.z - a.z) * t;
+    return a;
+}
+
 //
 // ~Matrices
 //
