@@ -45,7 +45,10 @@ AppUpdate() {
     
     Camera.Position = v3(4 * sin(t), sin(t) * cos(t), 4 * cos(t));
     Zen3DSetActiveCamera(&Camera);
-    
+    local f32 Alpha = 0;
+    Alpha += Platform->MouseScroll;
+    Alpha = (Alpha < 0) ? 0 : (Alpha > 1) ? 1 : Alpha;
+    Zen2DPushRect(v4(300, 10, 100, 100), v4(1.f, 1.f, 1.f, Alpha));
     Zen3DPushStaticMesh(&Platform->Core->Mesh);
     Zen2DPushBlur(v4(Platform->ScreenWidth/2 - 50, Platform->ScreenHeight/2 - 50, 100, 100));
     

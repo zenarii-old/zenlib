@@ -108,7 +108,6 @@ LinuxProcessEvent(XEvent Event) {
         case ButtonPress:
         case ButtonRelease: {
             b32 ButtonDown = (Event.type == ButtonPress);
-            
             int ButtonIndex = 0;
             switch (Event.xbutton.button) {
                 case Button1: {
@@ -120,8 +119,17 @@ LinuxProcessEvent(XEvent Event) {
                 case Button3: {
                     ButtonIndex = MOUSE_BUTTON_RIGHT;
                 } break;
+                case Button4: {
+                    if(ButtonDown) Platform->MouseScroll += 1.f/12.f;
+                } break;
+                case Button5: {
+                    if(ButtonDown) Platform->MouseScroll -= 1.f/12.f;
+                } break;
             }
-            GlobalPlatform.MouseDown[ButtonIndex] = ButtonDown;
+            
+            if(ButtonIndex < MOUSE_BUTTON_COUNT)
+                GlobalPlatform.MouseDown[ButtonIndex] = ButtonDown;
+            
         } break;
         
         case MotionNotify: {
@@ -204,7 +212,7 @@ int main(int argc, char ** argv) {
         GlobalPlatform.LoadFile = LinuxLoadFile;
         GlobalPlatform.HeapAlloc = LinuxHeapAlloc;
         GlobalPlatform.HeapFree = LinuxHeapFree;
-	GlobalPlatform.GetTime = LinuxTimerGetTime;
+        GlobalPlatform.GetTime = LinuxTimerGetTime;
 #ifdef USE_OPENGL
         GlobalPlatform.OpenGLLoadProcedure = LinuxOpenGLLoadProcedure;
 #endif

@@ -35,6 +35,7 @@ struct platform {
     b8 MouseDown[MOUSE_BUTTON_COUNT];
     b8 MouseWasDown[MOUSE_BUTTON_COUNT];
     v2 MousePosition;
+    f32 MouseScroll;
     
 #define MAX_PUT_CHARACTERS 32
     char PutCharacters[MAX_PUT_CHARACTERS];
@@ -69,6 +70,7 @@ ZenPlatformBeginFrame(void) {
     MemoryCopy(Platform->MouseWasDown, Platform->MouseDown, sizeof(b8) * MOUSE_BUTTON_COUNT);
     MemorySet(Platform->PutCharacters, 0, MAX_PUT_CHARACTERS * sizeof(char));
     Platform->PutCharactersCount = 0;
+    Platform->MouseScroll = 0;
 }
 
 internal void
