@@ -1,5 +1,10 @@
 #include <dlfcn.h>
 
+#ifndef DLL_NAME
+#define DLL_NAME sandbox.so
+#endif
+#define DLL_PATH "./" Stringify(DLL_NAME)
+
 typedef struct linux_app_code linux_app_code;
 struct linux_app_code {
     ZenApplicationStaticLoadCallback * StaticLoad;
@@ -16,8 +21,8 @@ LinuxAppCodeLoad(linux_app_code * AppCode) {
     char * Error = 0;
     
     void * Handle;
-    // TODO(Abi): Sort out the string, should be absolute not relative
-    Handle = dlopen("./sandbox.so", RTLD_NOW);
+    
+    Handle = dlopen(DLL_PATH, RTLD_NOW);
     
     if((Error = dlerror())) {
         LinuxError("Shared Library (" Stringify(__LINE__) ")", Error);
@@ -46,7 +51,7 @@ LinuxAppCodeLoad(linux_app_code * AppCode) {
     if(Success) {
         AppCode->Handle = Handle;
         struct stat FileAttributes = {0};
-        stat("./sandbox.so", &FileAttributes);
+        stat(DLL_PATH, &FileAttributes);
         AppCode->LastWriteTime = FileAttributes.st_mtime;
     }
     else {
@@ -63,7 +68,7 @@ LinuxAppCodeLoad(linux_app_code * AppCode) {
 internal void
 LinuxAppCodeBeginFrame(linux_app_code * AppCode) {
     struct stat DLLAttributes = {0};
-    stat("./sandbox.so", &DLLAttributes);
+    stat(DLL_PATH, &DLLAttributes);
     
     if(DLLAttributes.st_mtime != AppCode->LastWriteTime) {
         AppCode->HotUnload();
