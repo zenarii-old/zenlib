@@ -42,16 +42,17 @@ const float AmbientStrength  = 1.0;
 const float SpecularStrength = 0.5;
 
 void main() {
+    vec3 SunDir = normalize(SunDirection);
 	vec3 Normal = normalize(fNormal);
 	vec4 Ambient = AmbientStrength * SunColour;
 	
 	// NOTE(Abi): Diffuse Calculation
-	float Diff = max(dot(Normal, SunDirection), 0.0);
+	float Diff = max(dot(Normal, -SunDir), 0.0);
 	vec4 Diffuse = Diff * SunColour;
 
 	// NOTE(Abi): Specular Calculation
 	vec3 ViewDirection = normalize(ViewPosition - fPosition);
-	vec3 ReflectDir    = reflect(SunDirection, Normal);
+	vec3 ReflectDir    = reflect(SunDir, Normal);
 	float Spec         = pow(max(dot(ViewDirection, ReflectDir), 0.0), 32);
 	vec4 Specular      = Spec * SpecularStrength * SunColour;
 

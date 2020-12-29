@@ -65,7 +65,7 @@ AppInit() {
     for(int i = 0; i < sizeof(Vertices)/sizeof(v3); i += 3) {
         v3 Edge1 = SubtractV3(Vertices[i], Vertices[i + 1]);
         v3 Edge2 = SubtractV3(Vertices[i], Vertices[i + 2]);
-        v3 Normal = CrossV3(Edge2, Edge1);
+        v3 Normal = CrossV3(Edge1, Edge2);
         
         Normals[i]     = Normal;
         Normals[i + 1] = Normal;
@@ -96,7 +96,7 @@ AppUpdate() {
     local f32 t;
     if(Platform->KeyDown[ZKEY_A]) t += Platform->Delta * 2.f;
     if(Platform->KeyDown[ZKEY_D]) t -= Platform->Delta * 2.f;
-    Camera.Position = v3(4 * sin(t), sin(t) * cos(t), 4 * cos(t));
+    Camera.Position = v3(4 * sin(t), 0.f, 4 * cos(t));
     Zen3DSetActiveCamera(&Camera);
     
     Zen3DPushStaticMesh(&Platform->Core->Mesh);
