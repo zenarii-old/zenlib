@@ -61,6 +61,13 @@ Zen3DSetActiveCamera(camera * Camera) {
 }
 
 internal void
+Zen3DSetActiveSun(sun * Sun) {
+    Zen3D->ActiveRequest = &Zen3D->Requests[Zen3D->RequestCount++];
+    Zen3D->ActiveRequest->Type = ZEN3D_REQUEST_SET_SUN;
+    Zen3D->ActiveRequest->Data = Sun;
+}
+
+internal void
 Zen3DEnable(zen3d_capability Cap) {
     Zen3D->ActiveRequest = &Zen3D->Requests[Zen3D->RequestCount++];
     Zen3D->ActiveRequest->Type = ZEN3D_REQUEST_ENABLE;
@@ -86,8 +93,8 @@ Zen3DPolyMode(zen3d_poly_mode Mode) {
 //
 
 internal static_mesh
-Zen3DStaticMeshFromData(u32 Count, v3 * Vertices, v4 * Colours) {
-    u32 FLOAT_NUM = 7;
+Zen3DStaticMeshFromData(u32 Count, v3 * Vertices, v4 * Colours, v3 * Normals) {
+    u32 FLOAT_NUM = 10;
     
     static_mesh Mesh = {0};
     {
@@ -99,6 +106,7 @@ Zen3DStaticMeshFromData(u32 Count, v3 * Vertices, v4 * Colours) {
         
         OpenGLAddFloatAttribute(0, 3, FLOAT_NUM, 0);
         OpenGLAddFloatAttribute(1, 4, FLOAT_NUM, 3);
+        OpenGLAddFloatAttribute(2, 3, FLOAT_NUM, 7);
     }
     
     // NOTE(Abi): Copy the data across
@@ -113,10 +121,13 @@ Zen3DStaticMeshFromData(u32 Count, v3 * Vertices, v4 * Colours) {
         Data[i * FLOAT_NUM + k++] = Colours[i].y;
         Data[i * FLOAT_NUM + k++] = Colours[i].z;
         Data[i * FLOAT_NUM + k++] = Colours[i].w;
+        
+        Data[i * FLOAT_NUM + k++] = Normals[i].x;
+        Data[i * FLOAT_NUM + k++] = Normals[i].y;
+        Data[i * FLOAT_NUM + k++] = Normals[i].z;
     }
     
     Mesh.VerticesCount = Count;
-    
     
     glBufferData(GL_ARRAY_BUFFER, Count * FLOAT_NUM * sizeof(f32), Data, GL_STATIC_DRAW);
     glBindVertexArray(0);
@@ -236,11 +247,15 @@ Zen3DInit(memory_arena * Arena) {
     }
     
     // NOTE(Abi): Generate Uniforms
-    glGenBuffers(1, &Zen3D->UBO);
-    glBindBuffer(GL_UNIFORM_BUFFER, Zen3D->UBO);
+    glGenBuffers(1, &Zen3D->Uniformbuffers[ZEN3D_UNIFORM_MATRICES]);
+    glBindBuffer(GL_UNIFORM_BUFFER, Zen3D->Uniformbuffers[ZEN3D_UNIFORM_MATRICES]);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(f32) * 16, 0, GL_DYNAMIC_DRAW);
-    glBindBufferBase(GL_UNIFORM_BUFFER, 0, Zen3D->UBO); 
-    //glBindBuffer(GL_UNIFORM_BUFFER, 0); // may be unnecessary
+    glBindBufferBase(GL_UNIFORM_BUFFER, ZEN3D_UNIFORM_MATRICES, Zen3D->Uniformbuffers[ZEN3D_UNIFORM_MATRICES]); 
+    
+    glGenBuffers(1, &Zen3D->Uniformbuffers[ZEN3D_UNIFORM_LIGHTS]);
+    glBindBuffer(GL_UNIFORM_BUFFER, Zen3D->Uniformbuffers[ZEN3D_UNIFORM_LIGHTS]);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(sun), 0, GL_DYNAMIC_DRAW);
+    glBindBufferBase(GL_UNIFORM_BUFFER, ZEN3D_UNIFORM_LIGHTS, Zen3D->Uniformbuffers[ZEN3D_UNIFORM_LIGHTS]);
     
     
 #include "shaders/generated_opengl_shaders.inc"
@@ -248,7 +263,8 @@ Zen3DInit(memory_arena * Arena) {
         fprintf(stderr, "[Zen3D] Loading '%s' shader.\n", ShaderInfo[i].Name);
         Zen3D->Shaders[i] = Zen3DOpenGLLoadShader(ShaderInfo[i].Name, ShaderInfo[i].VertexSource, ShaderInfo[i].FragmentSource);
         i32 idx = glGetUniformBlockIndex(Zen3D->Shaders[i], "Matrices");
-        glUniformBlockBinding(Zen3D->Shaders[i], idx, 0);
+        if(idx != GL_INVALID_INDEX)
+            glUniformBlockBinding(Zen3D->Shaders[i], idx, ZEN3D_UNIFORM_MATRICES);
     }
     
     Zen3D->Framebuffer = OpenGLCreateFramebuffer(Platform->ScreenWidth, Platform->ScreenHeight);
@@ -261,7 +277,6 @@ Zen3DBeginFrame() {
     Zen3D->Shapes.AllocPos = 0;
     Zen3D->RequestCount = 0;
     Zen3D->ActiveRequest = 0;
-    // TODO(Abi): Clear framebuffer colour/depth
     
     {
         Zen3D->RendererWidth  = Platform->ScreenWidth;
@@ -271,6 +286,7 @@ Zen3DBeginFrame() {
     OpenGLBindFramebuffer(&Zen3D->Framebuffer);
     glClearColor(0.f, 0.f, 0.f, 0.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // TODO(Abi): figure out where to put this
     OpenGLBindFramebuffer(0);
     glClearColor(0.f, 0.f, 0.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -278,7 +294,7 @@ Zen3DBeginFrame() {
 
 internal void
 Zen3DEndFrame() {
-    // TEMP(Abi): delete when have a uniform buffer
+    // TEMP(Abi): should be able to remove
     OpenGLBindFramebuffer(&Zen3D->Framebuffer);
     {
         glUseProgram(Zen3D->Shaders[ZEN3D_SHADER_RGBA]);
@@ -330,7 +346,7 @@ Zen3DEndFrame() {
                 }
                 // NOTE(Abi): Since OpenGL uses column-major matrices, have to take transpose.
                 matrix4x4 VP = TransposeMatrix(MultM4M4(Projection, View));
-                glBindBuffer(GL_UNIFORM_BUFFER, Zen3D->UBO);
+                glBindBuffer(GL_UNIFORM_BUFFER, Zen3D->Uniformbuffers[ZEN3D_UNIFORM_MATRICES]);
                 glBufferSubData(GL_UNIFORM_BUFFER, 0, 64, &VP.Elements[0][0]); 
                 glBindBuffer(GL_UNIFORM_BUFFER, 0);
             } break;
@@ -358,9 +374,16 @@ Zen3DEndFrame() {
                 }
             } break;
             
+            case ZEN3D_REQUEST_SET_SUN: {
+                sun * Sun = Request->Data;
+                glBindBuffer(GL_UNIFORM_BUFFER, Zen3D->Uniformbuffers[ZEN3D_UNIFORM_LIGHTS]);
+                glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(sun), Sun); 
+                glBindBuffer(GL_UNIFORM_BUFFER, 0);
+            } break;
+            
             // TODO(Abi): No batching for static objects yet.
             case ZEN3D_REQUEST_STATIC_MESH: {
-                glUseProgram(Zen3D->Shaders[ZEN3D_SHADER_RGBA]); //mesh shader?
+                glUseProgram(Zen3D->Shaders[ZEN3D_SHADER_LIGHTING]); //mesh shader?
                 static_mesh * Mesh = Request->Data; // TODO(Abi): check this works when deleting mesh.
                 glBindVertexArray(Mesh->VAO);
                 glDrawArrays(GL_TRIANGLES, 0, Mesh->VerticesCount);

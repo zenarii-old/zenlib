@@ -24,10 +24,10 @@ struct zen3d_shader_info {
 typedef enum zen3d_shader_type zen3d_shader_type;
 enum zen3d_shader_type {
     ZEN3D_SHADER_RGBA,
+    ZEN3D_SHADER_LIGHTING,
     
     ZEN3D_SHADER_COUNT,
 };
-
 
 typedef enum zen3d_request_type zen3d_request_type;
 enum zen3d_request_type {
@@ -38,6 +38,8 @@ enum zen3d_request_type {
     ZEN3D_REQUEST_POLYMODE,
     ZEN3D_REQUEST_ENABLE,
     ZEN3D_REQUEST_DISABLE,
+    // TODO(Abi): think this through re more lights
+    ZEN3D_REQUEST_SET_SUN, 
     
     ZEN3D_REQUEST_COUNT
 };
@@ -63,10 +65,18 @@ enum zen3d_capability {
     // TODO(Abi): fill this out
 };
 
+typedef enum zen3d_uniform_binding zen3d_uniform_binding;
+enum zen3d_uniform_binding {
+    ZEN3D_UNIFORM_MATRICES,
+    ZEN3D_UNIFORM_LIGHTS,
+    
+    ZEN3D_UNIFORM_COUNT
+};
+
 struct zen3d {
     ZEN3D_COMMON;
     
-    GLuint UBO;
+    GLuint Uniformbuffers[ZEN3D_UNIFORM_COUNT];
     GLuint Shaders[ZEN3D_SHADER_COUNT];
     GLuint GeneralVAO;
     
@@ -103,4 +113,10 @@ struct camera {
     v3 Position;
     v3 Target;
     f32 fov;
+};
+
+typedef struct sun sun;
+struct sun {
+    v3 Direction;
+    v4 Colour;
 };
