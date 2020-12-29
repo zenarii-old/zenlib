@@ -117,6 +117,7 @@ struct camera {
 
 typedef struct sun sun;
 struct sun {
-    v3 Direction;
+    // NOTE(Abi): Padding since OpenGL uniform buffers align to 4 floats;
+    v3 Direction; f32 _pad;
     v4 Colour;
 };

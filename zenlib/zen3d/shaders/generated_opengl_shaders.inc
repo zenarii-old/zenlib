@@ -41,9 +41,11 @@ zen3d_shader_info ShaderInfo[] = {
 		"\n" \
 		"out vec4 fColour;\n" \
 		"out vec3 fNormal;\n" \
+		"out vec3 fPosition;\n" \
 		"\n" \
 		"void main() {\n" \
 		"	gl_Position = VP * vec4(inPosition, 1.0);\n" \
+		"	fPosition = inPosition;\n" \
 		"	fColour = inColour;\n" \
 		"	// TODO(Abi): Normal matrix to undo translations and scaling\n" \
 		"	fNormal = inNormal;\n" \
@@ -55,14 +57,18 @@ zen3d_shader_info ShaderInfo[] = {
 		"	// Directional/sun\n" \
 		"	vec3 SunDirection;\n" \
 		"	vec4 SunColour;\n" \
+		"\n" \
+		"	vec3 ViewPosition;\n" \
 		"};\n" \
 		"\n" \
 		"in vec4 fColour;\n" \
 		"in vec3 fNormal;\n" \
+		"in vec3 fPosition;\n" \
 		"\n" \
 		"out vec4 FragColour;\n" \
 		"\n" \
-		"const float AmbientStrength = 1.0;\n" \
+		"const float AmbientStrength  = 1.0;\n" \
+		"const float SpecularStrength = 0.5;\n" \
 		"\n" \
 		"void main() {\n" \
 		"	vec3 Normal = normalize(fNormal);\n" \
@@ -72,8 +78,17 @@ zen3d_shader_info ShaderInfo[] = {
 		"	float Diff = max(dot(Normal, SunDirection), 0.0);\n" \
 		"	vec4 Diffuse = Diff * SunColour;\n" \
 		"\n" \
-		"	vec4 Result = fColour * (Ambient + Diffuse);\n" \
-		"	FragColour = vec4(Result.x, Result.y, Result.z, 1.0);\n" \
+		"	// NOTE(Abi): Specular Calculation\n" \
+		"	vec3 ViewDirection = normalize(ViewPosition - fPosition);\n" \
+		"	vec3 ReflectDir    = reflect(SunDirection, Normal);\n" \
+		"	float Spec         = pow(max(dot(ViewDirection, ReflectDir), 0.0), 32);\n" \
+		"	vec4 Specular      = Spec * SpecularStrength * SunColour;\n" \
+		"\n" \
+		"	vec4 Result = (Ambient + Diffuse + Specular) * fColour;\n" \
+		"	FragColour  = vec4(Result.x, Result.y, Result.z, 1.0);\n" \
+		"\n" \
+		"    //if(gl_FragCoord.x < 400) FragColour = SunColour;\n" \
+		"	\n" \
 		"}\n"
 	},
 };

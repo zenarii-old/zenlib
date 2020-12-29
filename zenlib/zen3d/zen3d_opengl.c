@@ -254,7 +254,7 @@ Zen3DInit(memory_arena * Arena) {
     
     glGenBuffers(1, &Zen3D->Uniformbuffers[ZEN3D_UNIFORM_LIGHTS]);
     glBindBuffer(GL_UNIFORM_BUFFER, Zen3D->Uniformbuffers[ZEN3D_UNIFORM_LIGHTS]);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(sun), 0, GL_DYNAMIC_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(sun) + sizeof(v3), 0, GL_DYNAMIC_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, ZEN3D_UNIFORM_LIGHTS, Zen3D->Uniformbuffers[ZEN3D_UNIFORM_LIGHTS]);
     
     
@@ -265,6 +265,9 @@ Zen3DInit(memory_arena * Arena) {
         i32 idx = glGetUniformBlockIndex(Zen3D->Shaders[i], "Matrices");
         if(idx != GL_INVALID_INDEX)
             glUniformBlockBinding(Zen3D->Shaders[i], idx, ZEN3D_UNIFORM_MATRICES);
+        idx = glGetUniformBlockIndex(Zen3D->Shaders[i], "Lights");
+        if(idx != GL_INVALID_INDEX)
+            glUniformBlockBinding(Zen3D->Shaders[i], idx, ZEN3D_UNIFORM_LIGHTS);
     }
     
     Zen3D->Framebuffer = OpenGLCreateFramebuffer(Platform->ScreenWidth, Platform->ScreenHeight);
@@ -348,6 +351,8 @@ Zen3DEndFrame() {
                 matrix4x4 VP = TransposeMatrix(MultM4M4(Projection, View));
                 glBindBuffer(GL_UNIFORM_BUFFER, Zen3D->Uniformbuffers[ZEN3D_UNIFORM_MATRICES]);
                 glBufferSubData(GL_UNIFORM_BUFFER, 0, 64, &VP.Elements[0][0]); 
+                glBindBuffer(GL_UNIFORM_BUFFER, Zen3D->Uniformbuffers[ZEN3D_UNIFORM_LIGHTS]);
+                glBufferSubData(GL_UNIFORM_BUFFER, sizeof(sun), sizeof(v3), &Camera->Position);
                 glBindBuffer(GL_UNIFORM_BUFFER, 0);
             } break;
             

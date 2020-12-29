@@ -88,7 +88,7 @@ AppUpdate() {
     };
     
     local sun Sun = {
-        v3(0.f, 0.f, -1.f),
+        v3(1.f, 1.f, 0.f), 0.f,
         v4(1.f, 1.f, 1.f, 1.f),
     };
     Zen3DSetActiveSun(&Sun);
@@ -102,9 +102,7 @@ AppUpdate() {
     Zen3DPushStaticMesh(&Platform->Core->Mesh);
     
     char * String = "Lighting test";
-    f32 Width = Zen2DGetStringWidth(String, Zen2DGetDefaultFont(), 32);
-    Zen2DPushText(String, v2((Platform->ScreenWidth - Width) * 0.5f, 300), 32);
-    
+    Zen2DPushText(String, v2(10, 10), 16);
     if(ZenKeyDown(ZKEY_ESCAPE)) ZenPlatformQuit();
 }
 
