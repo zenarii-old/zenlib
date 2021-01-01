@@ -1,23 +1,7 @@
-#define STB_IMAGE_IMPLEMENTATION
-#define STBI_ONLY_PNG
-#define STBI_ASSERT(x) Assert(x)
-// TODO(Abi): Add scratch arena stuff so no allocations
-#include "ext/stb_image.h"
 
 internal void
 Zen2DInitCommon(void) {
     stbi_set_flip_vertically_on_load(1);
-}
-
-internal texture
-Zen2DLoadTextureFromPNG(const char * Path, u32 Flags) {
-    i32 Width, Height, Channels;
-    unsigned char * Data = stbi_load(Path, &Width, &Height, &Channels, 0);
-    
-    texture T = Zen2DLoadTexture(Data, Width, Height, Channels, Flags);
-    
-    stbi_image_free(Data);
-    return T;
 }
 
 internal font

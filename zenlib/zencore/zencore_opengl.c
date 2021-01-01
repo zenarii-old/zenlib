@@ -93,3 +93,87 @@ OpenGLAddFloatAttribute(i32 ID, u32 Count, u32 Stride, u32 Offset) {
 // ~Shaders
 // TODO NOTE TODO
 
+//
+// ~Textures
+//
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_ONLY_PNG
+#define STBI_ASSERT(x) Assert(x)
+// TODO(Abi): Add scratch arena stuff so no allocations
+#include "ext/stb_image.h"
+
+#define ZEN_TEXTURE_NEAREST (1<<0)
+#define ZEN_TEXTURE_LINEAR  (1<<1)
+
+typedef struct texture texture;
+struct texture {
+    GLuint ID;
+    f32 Width;
+    f32 Height;
+};
+
+internal texture
+ZenLoadTexture(unsigned char * Data, i32 Width, i32 Height, i32 Channels, u32 Flags) {
+    texture Texture = {0};
+    {
+        glGenTextures(1, &Texture.ID);
+        Texture.Width  = Width;
+        Texture.Height = Height;
+    }
+    glBindTexture(GL_TEXTURE_2D, Texture.ID);
+    
+    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    {
+        u32 Magnification = GL_NEAREST;
+        if(Flags & ZEN_TEXTURE_LINEAR) Magnification = GL_LINEAR;
+        else if(Flags & ZEN_TEXTURE_NEAREST) Magnification = GL_NEAREST;
+        
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, Magnification);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, Magnification);
+    }
+    
+    switch (Channels) {
+        case 4: {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Width, Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, Data);
+        } break;
+        case 3: {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Width, Height, 0, GL_RGB, GL_UNSIGNED_BYTE, Data);
+        } break;
+        case 2: {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RG, Width, Height, 0, GL_RG, GL_UNSIGNED_BYTE, Data);
+        } break;
+        case 1: {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, Width, Height, 0, GL_RED, GL_UNSIGNED_BYTE, Data);
+        } break;
+        default: Assert(0 && "Invalid number of channels");
+    }
+    glGenerateMipmap(GL_TEXTURE_2D);
+    
+    return Texture;
+}
+
+
+internal texture
+ZenLoadTextureFromPNG(const char * Path, u32 Flags) {
+    i32 Width, Height, Channels;
+    unsigned char * Data = stbi_load(Path, &Width, &Height, &Channels, 0);
+    
+    texture T = ZenLoadTexture(Data, Width, Height, Channels, Flags);
+    
+    stbi_image_free(Data);
+    return T;
+}
+
+
+internal void
+ZenUnloadTexture(texture * Texture) {
+    glDeleteTextures(1, &Texture->ID);
+    MemorySet(Texture, 0, sizeof(texture));
+}
+
+internal b8
+ZenIsTextureValid(texture * Texture) {
+    return Texture->ID != 0;
+}

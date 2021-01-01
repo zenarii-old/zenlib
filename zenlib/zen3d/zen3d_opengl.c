@@ -88,13 +88,16 @@ Zen3DPolyMode(zen3d_poly_mode Mode) {
     Zen3D->ActiveRequest->Data = (void *)Mode;
 }
 
+
 //
 // ~Meshes
 //
 
 internal static_mesh
-Zen3DStaticMeshFromData(u32 Count, v3 * Vertices, v4 * Colours, v3 * Normals) {
-    u32 FLOAT_NUM = 10;
+Zen3DStaticMeshFromData(u32 Count, v3 * Vertices, v4 * Colours, v3 * Normals, v2 * UVs) {
+    Assert(Vertices && Colours && Normals && UVs);
+    
+    u32 FLOAT_NUM = 12;
     
     static_mesh Mesh = {0};
     {
@@ -107,6 +110,7 @@ Zen3DStaticMeshFromData(u32 Count, v3 * Vertices, v4 * Colours, v3 * Normals) {
         OpenGLAddFloatAttribute(0, 3, FLOAT_NUM, 0);
         OpenGLAddFloatAttribute(1, 4, FLOAT_NUM, 3);
         OpenGLAddFloatAttribute(2, 3, FLOAT_NUM, 7);
+        OpenGLAddFloatAttribute(3, 2, FLOAT_NUM, 10);
     }
     
     // NOTE(Abi): Copy the data across
@@ -125,9 +129,13 @@ Zen3DStaticMeshFromData(u32 Count, v3 * Vertices, v4 * Colours, v3 * Normals) {
         Data[i * FLOAT_NUM + k++] = Normals[i].x;
         Data[i * FLOAT_NUM + k++] = Normals[i].y;
         Data[i * FLOAT_NUM + k++] = Normals[i].z;
+        
+        Data[i * FLOAT_NUM + k++] = UVs[i].x;
+        Data[i * FLOAT_NUM + k++] = UVs[i].y;
     }
     
     Mesh.VerticesCount = Count;
+    Mesh.Texture = &Zen3D->White;
     
     glBufferData(GL_ARRAY_BUFFER, Count * FLOAT_NUM * sizeof(f32), Data, GL_STATIC_DRAW);
     glBindVertexArray(0);
@@ -272,6 +280,8 @@ Zen3DInit(memory_arena * Arena) {
     
     Zen3D->Framebuffer = OpenGLCreateFramebuffer(Platform->ScreenWidth, Platform->ScreenHeight);
     
+    unsigned char * White = (unsigned char *)"\255\255\255\255";
+    Zen3D->White = ZenLoadTexture(White, 1, 1, 4, ZEN_TEXTURE_NEAREST);
     fprintf(stderr, "[Zen3D] Loaded\n");
 }
 
@@ -291,7 +301,7 @@ Zen3DBeginFrame() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // TODO(Abi): figure out where to put this
     OpenGLBindFramebuffer(0);
-    glClearColor(0.f, 0.f, 0.f, 1.f);
+    glClearColor(0.53,0.81,0.92, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
@@ -390,7 +400,9 @@ Zen3DEndFrame() {
             case ZEN3D_REQUEST_STATIC_MESH: {
                 glUseProgram(Zen3D->Shaders[ZEN3D_SHADER_LIGHTING]); //mesh shader?
                 static_mesh * Mesh = Request->Data; // TODO(Abi): check this works when deleting mesh.
+                Assert(Mesh && Mesh->Texture);
                 glBindVertexArray(Mesh->VAO);
+                glBindTexture(GL_TEXTURE_2D, Mesh->Texture->ID);
                 glDrawArrays(GL_TRIANGLES, 0, Mesh->VerticesCount);
                 glBindVertexArray(0);
             } break;

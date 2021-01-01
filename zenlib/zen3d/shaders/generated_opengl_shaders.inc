@@ -71,16 +71,17 @@ zen3d_shader_info ShaderInfo[] = {
 		"const float SpecularStrength = 0.5;\n" \
 		"\n" \
 		"void main() {\n" \
+		"    vec3 SunDir = normalize(SunDirection);\n" \
 		"	vec3 Normal = normalize(fNormal);\n" \
 		"	vec4 Ambient = AmbientStrength * SunColour;\n" \
 		"	\n" \
 		"	// NOTE(Abi): Diffuse Calculation\n" \
-		"	float Diff = max(dot(Normal, SunDirection), 0.0);\n" \
+		"	float Diff = max(dot(Normal, -SunDir), 0.0);\n" \
 		"	vec4 Diffuse = Diff * SunColour;\n" \
 		"\n" \
 		"	// NOTE(Abi): Specular Calculation\n" \
 		"	vec3 ViewDirection = normalize(ViewPosition - fPosition);\n" \
-		"	vec3 ReflectDir    = reflect(SunDirection, Normal);\n" \
+		"	vec3 ReflectDir    = reflect(SunDir, Normal);\n" \
 		"	float Spec         = pow(max(dot(ViewDirection, ReflectDir), 0.0), 32);\n" \
 		"	vec4 Specular      = Spec * SpecularStrength * SunColour;\n" \
 		"\n" \

@@ -47,64 +47,10 @@ Zen2DOpenGLLoadShader(const char * Name, const char * VertexSource, const char *
 }
 
 
-
-internal texture
-Zen2DLoadTexture(unsigned char * Data, i32 Width, i32 Height, i32 Channels, u32 Flags) {
-    texture Texture = {0};
-    {
-        glGenTextures(1, &Texture.ID);
-        Texture.Width  = Width;
-        Texture.Height = Height;
-    }
-    glBindTexture(GL_TEXTURE_2D, Texture.ID);
-    
-    
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    {
-        u32 Magnification = GL_NEAREST;
-        if(Flags & ZEN2D_TEXTURE_LINEAR) Magnification = GL_LINEAR;
-        else if(Flags & ZEN2D_TEXTURE_NEAREST) Magnification = GL_NEAREST;
-        
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, Magnification);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, Magnification);
-    }
-    
-    switch (Channels) {
-        case 4: {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Width, Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, Data);
-        } break;
-        case 3: {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, Width, Height, 0, GL_RGB, GL_UNSIGNED_BYTE, Data);
-        } break;
-        case 2: {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RG, Width, Height, 0, GL_RG, GL_UNSIGNED_BYTE, Data);
-        } break;
-        case 1: {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, Width, Height, 0, GL_RED, GL_UNSIGNED_BYTE, Data);
-        } break;
-        default: Assert(0 && "Invalid number of channels");
-    }
-    glGenerateMipmap(GL_TEXTURE_2D);
-    
-    return Texture;
-}
-
-internal void
-Zen2DUnloadTexture(texture * Texture) {
-    glDeleteTextures(1, &Texture->ID);
-    MemorySet(Texture, 0, sizeof(texture));
-}
-
-internal b8
-Zen2DIsTextureValid(texture * Texture) {
-    return Texture->ID != 0;
-}
-
 internal font
 Zen2DLoadFont(void * PNGData, i32 Width, i32 Height, i32 Channels, font_glyph * Glyphs, u32 GlyphCount, u32 LineHeight, u32 FontSize, u32 Base, u32 LowestChar) {
     font Font = {0};
-    Font.Texture = Zen2DLoadTexture(PNGData, Width, Height, Channels, ZEN2D_TEXTURE_LINEAR);
+    Font.Texture = ZenLoadTexture(PNGData, Width, Height, Channels, ZEN_TEXTURE_LINEAR);
     Font.Glyphs = Platform->HeapAlloc(sizeof(font_glyph) * GlyphCount);
     MemoryCopy(Font.Glyphs, Glyphs, GlyphCount * sizeof(font_glyph));
     Font.GlyphCount = GlyphCount;
@@ -119,13 +65,13 @@ Zen2DLoadFont(void * PNGData, i32 Width, i32 Height, i32 Channels, font_glyph * 
 internal void
 Zen2DUnloadFont(font * Font) {
     Platform->HeapFree(Font->Glyphs, Font->GlyphCount * sizeof(font_glyph));
-    Zen2DUnloadTexture(&Font->Texture);
+    ZenUnloadTexture(&Font->Texture);
     MemorySet(Font, 0, sizeof(font));
 }
 
 internal b8
 Zen2DIsFontValid(font * Font) {
-    return Zen2DIsTextureValid(&Font->Texture) && Font->Glyphs;
+    return ZenIsTextureValid(&Font->Texture) && Font->Glyphs;
 }
 
 internal void

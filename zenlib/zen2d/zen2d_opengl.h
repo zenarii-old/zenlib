@@ -31,12 +31,6 @@ struct zen2d_batch {
     };
 };
 
-struct texture {
-    GLuint ID;
-    f32 Width;
-    f32 Height;
-};
-
 struct font {
     texture Texture;
     font_glyph * Glyphs;

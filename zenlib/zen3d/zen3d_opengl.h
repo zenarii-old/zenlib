@@ -95,11 +95,13 @@ struct zen3d {
     u32 RequestCount;
     
     framebuffer Framebuffer;
+    texture White;
 };
 
 struct static_mesh {
-    u32 VAO, VBO;
+    GLuint VAO, VBO;
     u32 VerticesCount;
+    texture * Texture;
 };
 
 typedef enum camera_mode camera_mode;
