@@ -101,7 +101,10 @@ struct v3i { i32 x, y, z; };
 #include "zencore_memory.c"
 #include "zencore_maths.c"
 #include "zencore_strings.c"
+
+#ifdef USE_OPENGL
 #include "zencore_opengl.c"
+#endif
 
 #include "program_options.inc"
 

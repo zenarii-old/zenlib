@@ -1,7 +1,3 @@
-#include <GL/gl.h>
-#include <GL/glx.h>
-#include <GL/glu.h>
-
 typedef GLuint shader;
 
 #define OPENGLPROC(function, type) global PFNGL##type##PROC gl##function;

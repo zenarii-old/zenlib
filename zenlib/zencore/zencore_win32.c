@@ -6,15 +6,10 @@
 // NOTE(Abi): CRT
 
 // NOTE(Abi): Zenlib Headers
-
-//temp as included elsewhere
-//begin
-#include "program_options.inc"
-#include "stdio.h"
-//end
+#include "zencore.h"
 
 // NOTE(Abi): Globals
-
+global platform GlobalPlatform;
 
 // NOTE(Abi): Zenlib Implementations
 #if 0
@@ -79,10 +74,34 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CMDLine, 
     UpdateWindow(Window);
     
     // TODO(abi): Platform initialisation
+    {
+        GlobalPlatform.TargetFPS = 60.f;
+        
+        void * PermenantStorage = VirtualAlloc(0, PERMENANT_STORAGE_SIZE, 
+                                               MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+        GlobalPlatform.PermenantArena = MemoryArenaInit(PermenantStorage, PERMENANT_STORAGE_SIZE);
+        
+        void * ScratchStorage = VirtualAlloc(0, SCRATCH_STORAGE_SIZE, 
+                                             MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+        GlobalPlatform.ScratchArena = MemoryArenaInit(ScratchStorage, SCRATCH_STORAGE_SIZE);
+        
+        // NOTE(Abi): Set function pointers
+        //GlobalPlatform.Error = LinuxError;
+        //GlobalPlatform.LoadFile = LinuxLoadFile;
+        //GlobalPlatform.HeapAlloc = LinuxHeapAlloc;
+        //GlobalPlatform.HeapFree = LinuxHeapFree;
+        //GlobalPlatform.GetTime = LinuxTimerGetTime;
+#ifdef USE_OPENGL
+        //GlobalPlatform.OpenGLLoadProcedure = LinuxOpenGLLoadProcedure;
+#endif
+        
+        Platform = &GlobalPlatform;
+    }
     
     // TODO(abi): Graphics initialisation
     
     // TODO(abi): Set up timing
+    
     int AppShouldQuit = 0;
     while(!AppShouldQuit) {
         MSG message;
