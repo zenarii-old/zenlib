@@ -17,18 +17,15 @@ global platform GlobalPlatform;
 
 // NOTE(Abi): Zenlib Implementations
 #if 0
-#ifdef USE_OPENGL
-#include "zencore_linux_opengl.c"
-#endif
-
 #include "zencore_linux_time.c"
 #include "zencore_linux_misc.c"
-#include "zencore_linux_fileio.c"
 #include "zencore_linux_app_code.c"
 #endif
 #include "zencore_win32_fileio.c"
 
-
+#ifdef USE_OPENGL
+#include "zencore_win32_opengl.c"
+#endif
 
 //~
 
@@ -65,6 +62,15 @@ LRESULT CALLBACK Win32ProcessEvent(HWND Window, UINT Message, WPARAM wParam, LPA
             fprintf(stderr, "Key %d pressed\n", KeyIndex);
     }
     // TODO(Abi): WM_CHAR
+    else if(Message == WM_SIZE) {
+        RECT ClientRect = {0};
+        GetClientRect(Window, &ClientRect);
+        i32 Width = ClientRect.right - ClientRect.left;
+        i32 Height = ClientRect.bottom - ClientRect.top;
+        //Win32RendererResize();
+        GlobalPlatform.ScreenWidth  = Width;
+        GlobalPlatform.ScreenHeight = Height;
+    }
     else {
         Result = DefWindowProc(Window, Message, wParam, lParam);
     }
@@ -85,12 +91,11 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CMDLine, 
         RegisterClass(&WindowClass);
     }
     
-    
     // NOTE(abi): show the actual window.
     HWND Window = CreateWindow(WindowClass.lpszClassName, 
                                WINDOW_TITLE, WS_OVERLAPPEDWINDOW,
                                CW_USEDEFAULT, CW_USEDEFAULT, 
-                               1280, 720,
+                               WINDOW_SIZEX, WINDOW_SIZEY,
                                0, 0, 
                                Instance, 
                                0);
@@ -131,6 +136,9 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CMDLine, 
 #ifdef USE_OPENGL
         //GlobalPlatform.OpenGLLoadProcedure = LinuxOpenGLLoadProcedure;
 #endif
+        GlobalPlatform.ScreenWidth  = WINDOW_SIZEX;
+        GlobalPlatform.ScreenHeight = WINDOW_SIZEY;
+        
         Platform = &GlobalPlatform;
     }
     
