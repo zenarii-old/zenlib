@@ -5,9 +5,9 @@
 
 typedef enum key_type key_type;
 enum key_type {
-#define KEY(key) ZKEY_##key,
+#define KEY(key) KEY_##key,
 #include "zen_key_list.inc"
-    ZKEY_COUNT
+    KEY_COUNT
 };
 
 typedef enum mouse_type mouse_type;
@@ -30,8 +30,8 @@ struct platform {
     f64 TotalTime;
     f32 Delta;
     
-    b8 KeyDown[ZKEY_COUNT];
-    b8 KeyWasDown[ZKEY_COUNT];
+    b8 KeyDown[KEY_COUNT];
+    b8 KeyWasDown[KEY_COUNT];
     b8 MouseDown[MOUSE_BUTTON_COUNT];
     b8 MouseWasDown[MOUSE_BUTTON_COUNT];
     v2 MousePosition;
@@ -66,7 +66,7 @@ global platform * Platform;
 
 internal void
 ZenPlatformBeginFrame(void) {
-    MemoryCopy(Platform->KeyWasDown,   Platform->KeyDown,   sizeof(b8) * ZKEY_COUNT);
+    MemoryCopy(Platform->KeyWasDown,   Platform->KeyDown,   sizeof(b8) * KEY_COUNT);
     MemoryCopy(Platform->MouseWasDown, Platform->MouseDown, sizeof(b8) * MOUSE_BUTTON_COUNT);
     MemorySet(Platform->PutCharacters, 0, MAX_PUT_CHARACTERS * sizeof(char));
     Platform->PutCharactersCount = 0;

@@ -7,8 +7,14 @@ DebugLog(i32 Type, const char * File, i32 Line, const char * Message, ...) {
     vfprintf(stderr, Message, Args);
     fprintf(stderr, "\n");
     
+#ifdef BUILD_WINDOWS
+    char Buffer[256];
+    int Written = vsprintf(Buffer, Message, Args);
+    Buffer[Written] = '\n';
+    OutputDebugStringA(Buffer);
+#endif
+    
     va_end(Args);
-    // TODO(Abi): Will need to use OutputStringA or smt on windows
 }
 
 internal void

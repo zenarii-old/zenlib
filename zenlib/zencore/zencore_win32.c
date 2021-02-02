@@ -1,5 +1,9 @@
-// NOTE(Abi): Linux Headers
+// NOTE(Abi): Windows Headers and defines
+#define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
+
+
+#define BUILD_WINDOWS
 
 // NOTE(Abi): OpenGL
 
@@ -22,16 +26,49 @@ global platform GlobalPlatform;
 #include "zencore_linux_fileio.c"
 #include "zencore_linux_app_code.c"
 #endif
+#include "zencore_win32_fileio.c"
+
+
 
 //~
 
 LRESULT CALLBACK Win32ProcessEvent(HWND Window, UINT Message, WPARAM wParam, LPARAM lParam) {
     LRESULT Result = 0;
-    switch(Message) {
-        default: {
-            Result = DefWindowProc(Window, Message, wParam, lParam);
-        }
+    if(Message == WM_DESTROY) {
+        PostQuitMessage(0);
     }
+    else if((Message == WM_KEYDOWN) || (Message == WM_KEYUP)) {
+        b32 IsDown = (Message == WM_KEYDOWN);
+        u32 KeyCode = wParam;
+        u32 KeyIndex = 0;
+        
+        if('A' <= KeyCode && KeyCode <= 'Z') {
+            KeyIndex = KEY_A + (KeyCode - 'A');
+        }
+        else if(VK_LEFT <= KeyCode && KeyCode <= VK_DOWN) {
+            KeyIndex = KEY_LEFT + (KeyCode - VK_LEFT);
+        }
+        if(KeyCode >= VK_F1 && KeyCode <= VK_F12) {
+            KeyIndex = KEY_F1 + (KeyCode - VK_F1);
+        }
+        else if(KeyCode == VK_ESCAPE)     KeyIndex = KEY_ESCAPE;
+        else if(KeyCode == VK_CONTROL)    KeyIndex = KEY_CONTROL;
+        else if(KeyCode == VK_TAB)        KeyIndex = KEY_TAB;
+        else if(KeyCode == VK_RETURN)     KeyIndex = KEY_RETURN;
+        else if(KeyCode == VK_SHIFT)      KeyIndex = KEY_SHIFT;
+        else if(KeyCode == VK_SPACE)      KeyIndex = KEY_SPACE;
+        else if(KeyCode == VK_BACK)       KeyIndex = KEY_BACKSPACE;
+        else if(KeyCode == VK_OEM_PERIOD) KeyIndex = KEY_PERIOD;
+        
+        GlobalPlatform.KeyDown[KeyIndex] = IsDown;
+        if(KeyIndex)
+            fprintf(stderr, "Key %d pressed\n", KeyIndex);
+    }
+    // TODO(Abi): WM_CHAR
+    else {
+        Result = DefWindowProc(Window, Message, wParam, lParam);
+    }
+    
     return Result;
 }
 
@@ -87,34 +124,36 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CMDLine, 
         
         // NOTE(Abi): Set function pointers
         //GlobalPlatform.Error = LinuxError;
-        //GlobalPlatform.LoadFile = LinuxLoadFile;
+        GlobalPlatform.LoadFile = Win32LoadFile;
         //GlobalPlatform.HeapAlloc = LinuxHeapAlloc;
         //GlobalPlatform.HeapFree = LinuxHeapFree;
         //GlobalPlatform.GetTime = LinuxTimerGetTime;
 #ifdef USE_OPENGL
         //GlobalPlatform.OpenGLLoadProcedure = LinuxOpenGLLoadProcedure;
 #endif
-        
         Platform = &GlobalPlatform;
     }
     
     // TODO(abi): Graphics initialisation
     
-    // TODO(abi): Set up timing
+    char * f = Platform->LoadFile("text.txt", 1);
+    if(f) f[254] = 0;
+    Log("%s\n", f);
     
-    int AppShouldQuit = 0;
-    while(!AppShouldQuit) {
+    // TODO(abi): Set up timing
+    while(!GlobalPlatform.AppShouldQuit) {
         MSG message;
         while (PeekMessage(&message, NULL, 0, 0, PM_REMOVE) > 0) {
             TranslateMessage(&message);
             DispatchMessage(&message);
             
             if(message.message == WM_QUIT) {
-                AppShouldQuit = 1;
+                GlobalPlatform.AppShouldQuit = 1;
             }
         }
     }
     
+    DestroyWindow(Window);
     win32_quit:;
     
     return 0;

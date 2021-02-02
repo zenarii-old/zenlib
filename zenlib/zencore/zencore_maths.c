@@ -24,7 +24,7 @@ internal inline v3
 NormaliseV3(v3 v) {
     f32 Squared = v.x * v.x + v.y * v.y + v.z * v.z;
     if(Squared > 1.f + EPSILON || Squared < 1.f - EPSILON) {
-        f32 Length = sqrt(Squared);
+        f32 Length = sqrtf(Squared);
         v = v3(v.x/Length, v.y/Length, v.z/Length);
     }
     return v;
@@ -145,7 +145,7 @@ FrustrumMatrix(f32 Width, f32 Height, f32 Near, f32 Far) {
 
 internal inline matrix4x4
 PerspectiveMatrix(f32 Angle, f32 Aspect, f32 Near, f32 Far) {
-    f32 Height = 2.f * Near * tan(Angle * 0.5f);
+    f32 Height = 2.f * Near * tanf(Angle * 0.5f);
     f32 Width = Height * Aspect;
     matrix4x4 Result = FrustrumMatrix(Width, Height, Near, Far);
     return Result;
