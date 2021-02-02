@@ -1,9 +1,26 @@
 #include <gl/gl.h>
-#include "gl/glext.h"
-#include "gl/wglext.h"
+#include "ext/glext.h"
+#include "ext/wglext.h"
 
-internal void
-Win32RendererInit(void) {
+global HGLRC GlobalOpenGLContext;
+global PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
+global PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB;
+global PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
+
+
+internal void *
+Win32OpenGLLoadFunction(const char* Name) {
+    void * p = (void *)wglGetProcAddress(Name);
+    if (p == 0 || (p == (void*)0x1) || (p == (void*)0x2) || (p == (void*)0x3) || (p == (void*)-1)) {
+        //attempt to load OpenGL 1.1 proc
+        HMODULE Module = LoadLibraryA("opengl32.dll");
+        p = GetProcAddress(Module, Name);
+    }
+    return p;
+}
+
+internal b32
+Win32RendererInit(HDC DeviceContext) {
     b32 Success = 0;
     PIXELFORMATDESCRIPTOR DummyPixelFormatDesc = {
         sizeof(PIXELFORMATDESCRIPTOR),
@@ -67,10 +84,14 @@ Win32RendererInit(void) {
             wglDeleteContext(DummyOpenGLContext);
             wglMakeCurrent(DeviceContext, GlobalOpenGLContext);
             wglSwapIntervalEXT(0);
-            success = 1;
+            Success = 1;
         }
         
     }
-    return success;
-    
+    return Success;
+}
+
+internal void
+Win32RendererResize(i32 Width, i32 Height) {
+    glViewport(0, 0, Width, Height);
 }

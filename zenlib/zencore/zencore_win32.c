@@ -1,11 +1,12 @@
 // NOTE(Abi): Windows Headers and defines
 #define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
-
-
 #define BUILD_WINDOWS
 
 // NOTE(Abi): OpenGL
+#include <gl/gl.h>
+#include "ext/glext.h"
+#include "ext/wglext.h"
 
 // NOTE(Abi): CRT
 
@@ -16,16 +17,10 @@
 global platform GlobalPlatform;
 
 // NOTE(Abi): Zenlib Implementations
-#if 0
-#include "zencore_linux_time.c"
-#include "zencore_linux_misc.c"
-#include "zencore_linux_app_code.c"
-#endif
-#include "zencore_win32_fileio.c"
-
 #ifdef USE_OPENGL
 #include "zencore_win32_opengl.c"
 #endif
+#include "zencore_win32_fileio.c"
 
 //~
 
@@ -115,7 +110,6 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CMDLine, 
     ShowWindow(Window, ShowCommand);
     UpdateWindow(Window);
     
-    // TODO(abi): Platform initialisation
     {
         GlobalPlatform.TargetFPS = 60.f;
         
@@ -134,7 +128,7 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CMDLine, 
         //GlobalPlatform.HeapFree = LinuxHeapFree;
         //GlobalPlatform.GetTime = LinuxTimerGetTime;
 #ifdef USE_OPENGL
-        //GlobalPlatform.OpenGLLoadProcedure = LinuxOpenGLLoadProcedure;
+        GlobalPlatform.OpenGLLoadProcedure = Win32OpenGLLoadFunction;
 #endif
         GlobalPlatform.ScreenWidth  = WINDOW_SIZEX;
         GlobalPlatform.ScreenHeight = WINDOW_SIZEY;
@@ -143,10 +137,8 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CMDLine, 
     }
     
     // TODO(abi): Graphics initialisation
-    
-    char * f = Platform->LoadFile("text.txt", 1);
-    if(f) f[254] = 0;
-    Log("%s\n", f);
+    HDC DeviceContext = GetDC(Window);
+    Win32RendererInit(DeviceContext);
     
     // TODO(abi): Set up timing
     while(!GlobalPlatform.AppShouldQuit) {
