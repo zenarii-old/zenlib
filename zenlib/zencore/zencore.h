@@ -85,6 +85,10 @@ struct v4 {
 };
 #define v4(x, y, z, w) (v4){x, y, {{z, w}}}
 
+typedef struct v3i v3i;
+struct v3i { i32 x, y, z; };
+#define v3i(x, y, z) (v3i){x, y, z}
+
 #define ExpandRect(rect, n) v4((rect).x + (n), (rect).y + (n), \
 (rect).Width - 2 * (n), (rect).Height - 2 * (n))
 

@@ -2,6 +2,8 @@
 #include <GL/glx.h>
 #include <GL/glu.h>
 
+typedef GLuint shader;
+
 #define OPENGLPROC(function, type) global PFNGL##type##PROC gl##function;
 #include "opengl_proc_list.inc"
 
@@ -121,7 +123,6 @@ ZenLoadTexture(unsigned char * Data, i32 Width, i32 Height, i32 Channels, u32 Fl
         Texture.Height = Height;
     }
     glBindTexture(GL_TEXTURE_2D, Texture.ID);
-    
     
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);

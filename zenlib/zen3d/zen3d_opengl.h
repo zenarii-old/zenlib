@@ -2,18 +2,7 @@
 // Zen3DPushLine() Can also then be wrapped
 // Zen3DPushShape() Quads, Cube maybe idk
 // Zen3DPushMesh() mesh can use a custom shader
-// Zen3DPushStaticMesh() //only needs their VAOs
 
-// Zen3DPushMode() wireframe and things
-// Ability to enable and disable depth etc
-
-// use a Uniform Buffer Object for things like perspective/view.
-// model matrices should be optional for some shaders i guess
-
-// Zen3DPushShader(shader s) { Zen3D->ActiveCustomShader = s };
-// is a type of request so change in end frame too
-// when pushing meshes then use glUseProgram(Zen3D->ActiveCustomShader)
-// use a similar push camera
 typedef struct zen3d_shader_info zen3d_shader_info;
 struct zen3d_shader_info {
     char * Name;
@@ -25,6 +14,7 @@ typedef enum zen3d_shader_type zen3d_shader_type;
 enum zen3d_shader_type {
     ZEN3D_SHADER_RGBA,
     ZEN3D_SHADER_LIGHTING,
+    ZEN3D_SHADER_TEXTURE,
     
     ZEN3D_SHADER_COUNT,
 };
@@ -32,6 +22,7 @@ enum zen3d_shader_type {
 typedef enum zen3d_request_type zen3d_request_type;
 enum zen3d_request_type {
     ZEN3D_REQUEST_RGBA,
+    ZEN3D_REQUEST_TEXTURE,
     ZEN3D_REQUEST_LINE,
     ZEN3D_REQUEST_STATIC_MESH,
     ZEN3D_REQUEST_SET_CAMERA,
@@ -40,6 +31,7 @@ enum zen3d_request_type {
     ZEN3D_REQUEST_DISABLE,
     // TODO(Abi): think this through re more lights
     ZEN3D_REQUEST_SET_SUN, 
+    //ZEN3D_REQUEST_LIGHT
     
     ZEN3D_REQUEST_COUNT
 };
@@ -50,6 +42,8 @@ struct zen3d_request {
     
     void * Data;
     u32 DataLength;
+    
+    texture * Texture;
 };
 
 typedef enum zen3d_poly_mode zen3d_poly_mode;
@@ -80,14 +74,16 @@ struct zen3d {
     GLuint Shaders[ZEN3D_SHADER_COUNT];
     GLuint GeneralVAO;
     
-    struct { \
-        GLuint VAO, VBO; \
-        u32 Stride; \
-        u32 Size; \
-        u32 Max; \
-        unsigned char * Memory; \
-        u32 AllocPos; \
-    } Shapes;
+#define ZEN3DBATCH(name, stride, size, max) \
+struct { \
+GLuint VAO, VBO; \
+u32 Stride; \
+u32 Size; \
+u32 Max; \
+unsigned char * Memory; \
+u32 AllocPos; \
+} name;
+#include "zen3d_batch_data_types.inc"
     
 #define ZEN3D_MAX_REQUESTS 2048
     zen3d_request * ActiveRequest;
@@ -101,7 +97,10 @@ struct zen3d {
 struct static_mesh {
     GLuint VAO, VBO;
     u32 VerticesCount;
-    texture * Texture;
+    
+    u32 TextureCount;
+    texture * Textures;
+    shader Shader;
 };
 
 typedef enum camera_mode camera_mode;

@@ -3,6 +3,8 @@
 //
 internal u32
 Zen3DOpenGLLoadShader(const char * Name, const char * VertexSource, const char * FragmentSource) {
+    Assert(VertexSource && FragmentSource);
+    
     u32 Shader = 0;
     b32 SuccessfulCompilation = 0;
     char InfoLog[512] = {0};
@@ -16,7 +18,7 @@ Zen3DOpenGLLoadShader(const char * Name, const char * VertexSource, const char *
     if(!SuccessfulCompilation) {
         glGetShaderInfoLog(Vertex, 512, 0, InfoLog);
         LogError("Failed to compile vertex shader %s.\n%s", Name, InfoLog);
-        Platform->Error("Zen3D OpenGL - Vertex Shader", InfoLog);
+        //Platform->Error("Zen3D OpenGL - Vertex Shader", InfoLog);
     }
     
     u32 Fragment = 0;
@@ -40,11 +42,45 @@ Zen3DOpenGLLoadShader(const char * Name, const char * VertexSource, const char *
     if(!SuccessfulCompilation) {
         glGetProgramInfoLog(Shader, 512, 0, InfoLog);
         LogError("Failed to compile shader program %s.\n%s", Name, InfoLog);
-        Platform->Error("Zen3D OpenGL - ShaderProgram", InfoLog);
+        //Platform->Error("Zen3D OpenGL - ShaderProgram", InfoLog);
     }
     
     glDeleteShader(Vertex);
     glDeleteShader(Fragment);
+    
+    // NOTE(Abi): Attach uniforms
+    i32 idx = glGetUniformBlockIndex(Shader, "Matrices");
+    if(idx != GL_INVALID_INDEX)
+        glUniformBlockBinding(Shader, idx, ZEN3D_UNIFORM_MATRICES);
+    idx = glGetUniformBlockIndex(Shader, "Lights");
+    if(idx != GL_INVALID_INDEX)
+        glUniformBlockBinding(Shader, idx, ZEN3D_UNIFORM_LIGHTS);
+    
+    return Shader;
+}
+
+internal shader
+Zen3DLoadCustomShader(char * Name, char * VertexPath, char * FragmentPath) {
+    char * VertexSource = Platform->LoadFile(VertexPath, 1);
+    char * FragmentSource = Platform->LoadFile(FragmentPath, 1);
+    shader Shader = Zen3DOpenGLLoadShader(Name, VertexSource, FragmentSource);
+    
+    glUseProgram(Shader);
+#if 1
+    char SamplerName[32];
+    for(i32 i = 0; i < 10; ++i) {
+        sprintf(SamplerName, "Texture%d", i);
+        GLint Location = glGetUniformLocation(Shader, SamplerName);
+        if(Location != -1) glUniform1i(Location, i);
+    }
+#else
+    GLint Loc1 = glGetUniformLocation(Shader, "Texture0");
+    GLint Loc2 = glGetUniformLocation(Shader, "Texture1");
+    Assert(Loc1 != -1);
+    Assert(Loc2 != -1);
+    glUniform1i(Loc1, 0);
+    glUniform1i(Loc2, 1);
+#endif
     
     return Shader;
 }
@@ -88,11 +124,69 @@ Zen3DPolyMode(zen3d_poly_mode Mode) {
     Zen3D->ActiveRequest->Data = (void *)Mode;
 }
 
+//
+// ~Textures
+//
+
+internal void
+Zen3DPushTexturedQuadTint(v3 p0, v3 p1, v3 p2, v3 p3, texture *Texture, v4 Source, v4 Colour) {
+    Assert((Zen3D->Textures.AllocPos/Zen3D->Textures.Size) + 6 < Zen3D->Textures.Max);
+    Assert(ZenIsTextureValid(Texture));
+    
+    if(!Zen3D->ActiveRequest || Zen3D->ActiveRequest->Type != ZEN3D_REQUEST_RGBA || Texture != Zen3D->ActiveRequest->Texture) {
+        Zen3D->ActiveRequest = &Zen3D->Requests[Zen3D->RequestCount++];
+        Zen3D->ActiveRequest->Type = ZEN3D_REQUEST_TEXTURE;
+        
+        Zen3D->ActiveRequest->Data = Zen3D->Textures.Memory + Zen3D->Textures.AllocPos;
+        Zen3D->ActiveRequest->DataLength = 0;
+        Zen3D->ActiveRequest->Texture = Texture;
+    }
+    
+    // NOTE(Abi): normalise texture coords
+    Source.x /= Texture->Width;  Source.Width  /= Texture->Width;
+    Source.y /= Texture->Height; Source.Height /= Texture->Height;
+    
+    GLubyte * Data = Zen3D->Textures.Memory + Zen3D->Textures.AllocPos;
+    {
+        *(v3 *)((f32 *)(Data)+0)  = p0;
+        *(v4 *)((f32 *)(Data)+3)  = Colour;
+        *(v2 *)((f32 *)(Data)+7)  = v2(Source.x + Source.Width, Source.y + Source.Height);
+        
+        *(v3 *)((f32 *)(Data)+9)  = p1;
+        *(v4 *)((f32 *)(Data)+12) = Colour;
+        *(v2 *)((f32 *)(Data)+16)  = v2(Source.x + Source.Width, Source.y);
+        
+        *(v3 *)((f32 *)(Data)+18) = p3;
+        *(v4 *)((f32 *)(Data)+21) = Colour;
+        *(v2 *)((f32 *)(Data)+25)  = v2(Source.x, Source.y + Source.Height);
+        
+        *(v3 *)((f32 *)(Data)+27) = p1;
+        *(v4 *)((f32 *)(Data)+30) = Colour;
+        *(v2 *)((f32 *)(Data)+34)  = v2(Source.x + Source.Width, Source.y);
+        
+        *(v3 *)((f32 *)(Data)+36) = p2;
+        *(v4 *)((f32 *)(Data)+39) = Colour;
+        *(v2 *)((f32 *)(Data)+43)  = v2(Source.x, Source.y);
+        
+        *(v3 *)((f32 *)(Data)+45) = p3;
+        *(v4 *)((f32 *)(Data)+48) = Colour;
+        *(v2 *)((f32 *)(Data)+52)  = v2(Source.x, Source.y + Source.Height);
+    }
+    
+    Zen3D->Textures.AllocPos += Zen3D->Textures.Stride * 6;
+    Zen3D->ActiveRequest->DataLength += Zen3D->Textures.Stride * 6;
+}
+
+internal void
+Zen3DPushTexturedQuad(v3 p0, v3 p1, v3 p2, v3 p3, texture * Texture, v4 Source) {
+    v4 White = v4(1, 1, 1, 1);
+    Zen3DPushTexturedQuadTint(p0, p1, p2, p3, Texture, Source, White);
+}
 
 //
 // ~Meshes
 //
-
+// TODO(Abi): choose from unlit colours, unlit texture, colour + texture + lighting
 internal static_mesh
 Zen3DStaticMeshFromData(u32 Count, v3 * Vertices, v4 * Colours, v3 * Normals, v2 * UVs) {
     Assert(Vertices && Colours && Normals && UVs);
@@ -135,7 +229,9 @@ Zen3DStaticMeshFromData(u32 Count, v3 * Vertices, v4 * Colours, v3 * Normals, v2
     }
     
     Mesh.VerticesCount = Count;
-    Mesh.Texture = &Zen3D->White;
+    Mesh.Textures      = &Zen3D->White;
+    Mesh.TextureCount  = 1;
+    Mesh.Shader        = Zen3D->Shaders[ZEN3D_SHADER_LIGHTING];
     
     glBufferData(GL_ARRAY_BUFFER, Count * FLOAT_NUM * sizeof(f32), Data, GL_STATIC_DRAW);
     glBindVertexArray(0);
@@ -155,6 +251,15 @@ Zen3DPushStaticMesh(static_mesh * Mesh) {
     Zen3D->ActiveRequest = &Zen3D->Requests[Zen3D->RequestCount++];
     Zen3D->ActiveRequest->Type = ZEN3D_REQUEST_STATIC_MESH;
     Zen3D->ActiveRequest->Data = Mesh;
+}
+
+//
+// ~Textures
+//
+
+internal void
+Zen3DPushTexturedMesh(static_mesh * Mesh) {
+    
 }
 
 //
@@ -230,6 +335,7 @@ internal void
 Zen3DInit(memory_arena * Arena) {
     glEnable(GL_BLEND);
     
+#if 0
     {
         Zen3D->Shapes.Stride = sizeof(f32) * 7;
         // NOTE(Abi): Since made of triangles.
@@ -238,6 +344,16 @@ Zen3DInit(memory_arena * Arena) {
         
         Zen3D->Shapes.Memory = MemoryArenaAlloc(Arena, Zen3D->Shapes.Size * Zen3D->Shapes.Max);
     }
+#endif
+#define ZEN3DBATCH(name, stride, size, max) \
+{ \
+Zen3D->name.Stride = stride; \
+Zen3D->name.Size   = size; \
+Zen3D->name.Max    = max; \
+    \
+Zen3D->name.Memory = MemoryArenaAlloc(Arena, Zen3D->name.Size * Zen3D->name.Max); \
+}
+#include "zen3d_batch_data_types.inc"
     
     // NOTE(Abi): Shape Data
     {
@@ -251,6 +367,24 @@ Zen3DInit(memory_arena * Arena) {
         OpenGLAddFloatAttribute(0, 3, 7, 0);
         // NOTE(Abi): Colour data
         OpenGLAddFloatAttribute(1, 4, 7, 3);
+        glBindVertexArray(0);
+    }
+    
+    // NOTE(Abi): Texture Data
+    {
+        glGenVertexArrays(1, &Zen3D->Textures.VAO);
+        glBindVertexArray(Zen3D->Textures.VAO);
+        
+        glGenBuffers(1, &Zen3D->Textures.VBO);
+        glBindBuffer(GL_ARRAY_BUFFER, Zen3D->Textures.VBO);
+        glBufferData(GL_ARRAY_BUFFER, Zen3D->Textures.Max * Zen3D->Textures.Size, 0, GL_DYNAMIC_DRAW);
+        // NOTE(Abi): Position data
+        OpenGLAddFloatAttribute(0, 3, 9, 0);
+        // NOTE(Abi): Colour data
+        OpenGLAddFloatAttribute(1, 4, 9, 3);
+        // NOTE(Abi): UV data
+        OpenGLAddFloatAttribute(2, 2, 9, 7);
+        
         glBindVertexArray(0);
     }
     
@@ -270,24 +404,21 @@ Zen3DInit(memory_arena * Arena) {
     for(i32 i = 0; i < ZEN3D_SHADER_COUNT; ++i) {
         fprintf(stderr, "[Zen3D] Loading '%s' shader.\n", ShaderInfo[i].Name);
         Zen3D->Shaders[i] = Zen3DOpenGLLoadShader(ShaderInfo[i].Name, ShaderInfo[i].VertexSource, ShaderInfo[i].FragmentSource);
-        i32 idx = glGetUniformBlockIndex(Zen3D->Shaders[i], "Matrices");
-        if(idx != GL_INVALID_INDEX)
-            glUniformBlockBinding(Zen3D->Shaders[i], idx, ZEN3D_UNIFORM_MATRICES);
-        idx = glGetUniformBlockIndex(Zen3D->Shaders[i], "Lights");
-        if(idx != GL_INVALID_INDEX)
-            glUniformBlockBinding(Zen3D->Shaders[i], idx, ZEN3D_UNIFORM_LIGHTS);
     }
     
     Zen3D->Framebuffer = OpenGLCreateFramebuffer(Platform->ScreenWidth, Platform->ScreenHeight);
     
-    unsigned char * White = (unsigned char *)"\255\255\255\255";
-    Zen3D->White = ZenLoadTexture(White, 1, 1, 4, ZEN_TEXTURE_NEAREST);
+    //unsigned char * White = (unsigned char *)"\255\255\255\255\255\255\255\255";
+    //Zen3D->White = ZenLoadTexture(White, 1, 1, 4, ZEN_TEXTURE_NEAREST);
+    Zen3D->White = ZenLoadTextureFromPNG("white.png", ZEN_TEXTURE_NEAREST);
     fprintf(stderr, "[Zen3D] Loaded\n");
 }
 
 internal void
 Zen3DBeginFrame() {
-    Zen3D->Shapes.AllocPos = 0;
+#define ZEN3DBATCH(name, stride, size, max) Zen3D->name.AllocPos = 0;
+#include "zen3d_batch_data_types.inc"
+    
     Zen3D->RequestCount = 0;
     Zen3D->ActiveRequest = 0;
     
@@ -297,11 +428,11 @@ Zen3DBeginFrame() {
     }
     // TEMP(Abi);
     OpenGLBindFramebuffer(&Zen3D->Framebuffer);
-    glClearColor(0.f, 0.f, 0.f, 0.f);
+    glClearColor(0.53, 0.81, 0.92, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // TODO(Abi): figure out where to put this
     OpenGLBindFramebuffer(0);
-    glClearColor(0.53,0.81,0.92, 1.f);
+    glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
@@ -327,6 +458,19 @@ Zen3DEndFrame() {
                     glBindBuffer(GL_ARRAY_BUFFER, Zen3D->Shapes.VBO);
                     glBufferSubData(GL_ARRAY_BUFFER, 0, Request->DataLength, Request->Data);
                     i32 Count = Request->DataLength/Zen3D->Shapes.Stride;
+                    glDrawArrays(GL_TRIANGLES, 0, Count);
+                }
+                glBindVertexArray(0);
+            } break;
+            
+            case ZEN3D_REQUEST_TEXTURE: {
+                glUseProgram(Zen3D->Shaders[ZEN3D_SHADER_TEXTURE]);
+                glBindVertexArray(Zen3D->Textures.VAO);
+                {
+                    glBindTexture(GL_TEXTURE_2D, Request->Texture->ID);
+                    glBindBuffer(GL_ARRAY_BUFFER, Zen3D->Textures.VBO);
+                    glBufferSubData(GL_ARRAY_BUFFER, 0, Request->DataLength, Request->Data);
+                    i32 Count = Request->DataLength/Zen3D->Textures.Stride;
                     glDrawArrays(GL_TRIANGLES, 0, Count);
                 }
                 glBindVertexArray(0);
@@ -398,13 +542,20 @@ Zen3DEndFrame() {
             
             // TODO(Abi): No batching for static objects yet.
             case ZEN3D_REQUEST_STATIC_MESH: {
-                glUseProgram(Zen3D->Shaders[ZEN3D_SHADER_LIGHTING]); //mesh shader?
                 static_mesh * Mesh = Request->Data; // TODO(Abi): check this works when deleting mesh.
-                Assert(Mesh && Mesh->Texture);
+                glUseProgram(Mesh->Shader);
+                
+                for(i32 i = 0; i < Mesh->TextureCount; ++i) {
+                    glActiveTexture(GL_TEXTURE0 + i);
+                    glBindTexture(GL_TEXTURE_2D, Mesh->Textures[i].ID);
+                }
+                glActiveTexture(GL_TEXTURE0);
+                
                 glBindVertexArray(Mesh->VAO);
-                glBindTexture(GL_TEXTURE_2D, Mesh->Texture->ID);
+                glBindTexture(GL_TEXTURE_2D, Mesh->Textures->ID);
                 glDrawArrays(GL_TRIANGLES, 0, Mesh->VerticesCount);
                 glBindVertexArray(0);
+                //glActiveTexture(GL_TEXTURE0);
             } break;
             
             default: Assert("[Zen3D] Request had an invalid type" == 0);

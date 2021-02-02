@@ -47,7 +47,7 @@ def generateShader(shader):
 
 
 def main():
-	shader_names = ["rgba.glsl", "lighting.glsl"];
+	shader_names = ["rgba.glsl", "lighting.glsl", "textures.glsl"];
 	final_string = "";
 	final_string += "zen3d_shader_info ShaderInfo[] = {\n"
 	for shader in shader_names:

@@ -83,6 +83,7 @@ LinuxProcessEvent(XEvent Event) {
                     KeyIndex = ZKEY_COMMA;
                     PutChar = ',';
                 } break;
+                
                 default: {
                     if(KeySymbol >= XK_A && KeySymbol <= XK_Z) {
                         KeyIndex = ZKEY_A + KeySymbol - XK_A;
@@ -91,6 +92,9 @@ LinuxProcessEvent(XEvent Event) {
                     else if(KeySymbol >= XK_a && KeySymbol <= XK_z) {
                         KeyIndex = ZKEY_A + KeySymbol - XK_a;
                         PutChar = 'a' + KeySymbol - XK_a;
+                    }
+                    else if(KeySymbol >= XK_F1 && KeySymbol <= XK_F12) {
+                        KeyIndex = ZKEY_F1 + KeySymbol - XK_F1;
                     }
                     else {
                         ZSoftAssert(!"Unknown character");
