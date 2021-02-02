@@ -19,9 +19,8 @@ blacklist_patterns = {
 };
 
 load_paths = {
-	{
-		{ {"."}, .recursive = true, .relative = true }, .os = "linux"
-	},
+	{ { {"."}, .recursive = true, .relative = true }, .os = "linux" },
+	{ { {"."}, .recursive = true, .relative = true }, .os = "win"   },
 };
 
 command_list = {
@@ -33,6 +32,7 @@ command_list = {
 		.cursor_at_end = false,
 		.cmd = {
 			{ "./build.sh", .os = "linux" },
+			{ "build.bat",  .os = "win"   },
 		},
 	},
 	
@@ -44,6 +44,7 @@ command_list = {
 		.cursor_at_end = false,
 		.cmd = {
 			{ "./run.sh", .os = "linux" },
+			{ "build\\zencore_win32.exe",  .os = "win"   },
 		},
 	},
 };
