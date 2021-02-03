@@ -21,6 +21,7 @@ global platform GlobalPlatform;
 #include "zencore_win32_opengl.c"
 #endif
 #include "zencore_win32_fileio.c"
+#include "zencore_win32_timer.c"
 
 //~
 
@@ -140,8 +141,14 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CMDLine, 
     HDC DeviceContext = GetDC(Window);
     Win32RendererInit(DeviceContext);
     
-    // TODO(abi): Set up timing
+    Win32TimerInit();
+    
     while(!GlobalPlatform.AppShouldQuit) {
+        ZenPlatformBeginFrame();
+        //Win32AppCodeBeginFrame();
+        
+        
+        // NOTE(abi): Process input
         MSG message;
         while (PeekMessage(&message, NULL, 0, 0, PM_REMOVE) > 0) {
             TranslateMessage(&message);
@@ -151,6 +158,12 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CMDLine, 
                 GlobalPlatform.AppShouldQuit = 1;
             }
         }
+        SwapBuffers(DeviceContext);
+        
+        MemoryArenaClear(&GlobalPlatform.ScratchArena);
+        //Win32AppCode.Update()
+        
+        Win32TimerEndFrame();
     }
     
     DestroyWindow(Window);
