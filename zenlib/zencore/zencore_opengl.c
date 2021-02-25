@@ -1,3 +1,9 @@
+// TODO(abi): figure out like, where i had put this for the linux build
+#include <windows.h>
+#include <gl/gl.h>
+#include "ext/glext.h"
+#include "ext/wglext.h"
+
 typedef GLuint shader;
 
 #define OPENGLPROC(function, type) global PFNGL##type##PROC gl##function;
@@ -8,6 +14,7 @@ OpenGLLoadAllFunctions(void) {
 #define OPENGLPROC(function, type) gl##function = (PFNGL##type##PROC)Platform->OpenGLLoadProcedure("gl" #function);
 #include "opengl_proc_list.inc"
 }
+
 
 //
 // ~Framebuffer

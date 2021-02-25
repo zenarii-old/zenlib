@@ -1,3 +1,5 @@
+
+
 // NOTE(Abi): Windows Headers and defines
 #define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
@@ -127,7 +129,7 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CMDLine, 
         GlobalPlatform.LoadFile = Win32LoadFile;
         //GlobalPlatform.HeapAlloc = LinuxHeapAlloc;
         //GlobalPlatform.HeapFree = LinuxHeapFree;
-        //GlobalPlatform.GetTime = LinuxTimerGetTime;
+        GlobalPlatform.GetTime = Win32TimerGetTime;
 #ifdef USE_OPENGL
         GlobalPlatform.OpenGLLoadProcedure = Win32OpenGLLoadFunction;
 #endif
@@ -137,7 +139,7 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CMDLine, 
         Platform = &GlobalPlatform;
     }
     
-    // TODO(abi): Graphics initialisation
+    // NOTE(abi): Graphics Initialisation
     HDC DeviceContext = GetDC(Window);
     Win32RendererInit(DeviceContext);
     
@@ -146,7 +148,6 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CMDLine, 
     while(!GlobalPlatform.AppShouldQuit) {
         ZenPlatformBeginFrame();
         //Win32AppCodeBeginFrame();
-        
         
         // NOTE(abi): Process input
         MSG message;

@@ -44,7 +44,7 @@ command_list = {
 		.cursor_at_end = false,
 		.cmd = {
 			{ "./run.sh", .os = "linux" },
-			{ "build\\zencore_win32.exe",  .os = "win"   },
+			{ "run.bat",  .os = "win"   },
 		},
 	},
 };

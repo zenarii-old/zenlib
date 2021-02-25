@@ -72,30 +72,30 @@ AppInit() {
         Normals[i + 2] = Normal;
     }
     
-    Platform->Core->Mesh = Zen3DStaticMeshFromData(sizeof(Vertices)/sizeof(v3), Vertices, Colours, Normals);
+    v2 UVs[sizeof(Vertices)/sizeof(v3)] = {0};
     
+    Zen3DStaticMeshFromData(sizeof(Vertices)/sizeof(v3), Vertices, Colours, Normals, UVs);
     Platform->Core->Font = Zen2DLoadFontFromFNTAndPNG("libmono.fnt", "libmono.png");
     Zen2DSetDefaultFont(&Platform->Core->Font);
 }
 
 internal void
 AppUpdate() {
-    local camera Camera = {
-        CAMERA_MODE_LOOK_AT,
-        v3(0, 0, 0),
-        v3(0, 0, 0),
-        0.5 * PI
-    };
     
-    local sun Sun = {
-        v3(1.f, 1.f, 0.f), 0.f,
-        v4(1.f, 1.f, 1.f, 1.f),
-    };
+    local camera Camera = {0};
+    Camera.Mode = CAMERA_MODE_LOOK_AT;
+    Camera.fov = 0.5 * PI;
+    
+    // TODO(abi): figure out why these initialisers are no longer constant
+    local sun Sun = {0};
+    Sun.Direction = v3(1.f, 1.f, 0.f);
+    Sun.Colour = v4(1.f, 1.f, 1.f, 1.f);
+    
     Zen3DSetActiveSun(&Sun);
     
     local f32 t;
-    if(Platform->KeyDown[ZKEY_A]) t += Platform->Delta * 2.f;
-    if(Platform->KeyDown[ZKEY_D]) t -= Platform->Delta * 2.f;
+    if(Platform->KeyDown[KEY_A]) t += Platform->Delta * 2.f;
+    if(Platform->KeyDown[KEY_D]) t -= Platform->Delta * 2.f;
     Camera.Position = v3(4 * sin(t), 0.f, 4 * cos(t));
     Zen3DSetActiveCamera(&Camera);
     
@@ -103,7 +103,7 @@ AppUpdate() {
     
     char * String = "Lighting test";
     Zen2DPushText(String, v2(10, 10), 16);
-    if(ZenKeyDown(ZKEY_ESCAPE)) ZenPlatformQuit();
+    if(ZenKeyDown(KEY_ESCAPE)) ZenPlatformQuit();
 }
 
 internal void

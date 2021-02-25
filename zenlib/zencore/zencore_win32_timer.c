@@ -8,6 +8,13 @@ struct win32_timer_info {
 
 global win32_timer_info Win32Timer;
 
+internal f64
+Win32TimerGetTime(void) {
+    LARGE_INTEGER Now;
+    QueryPerformanceCounter(&Now);
+    return ((f64)(Now.QuadPart - Win32Timer.StartTime.QuadPart) / ((f64)Win32Timer.ClockFrequency.QuadPart));
+}
+
 internal void
 Win32TimerInit(void) {
     UINT DesiredSleepGranularity = 1;
@@ -37,6 +44,7 @@ Win32TimerEndFrame(void) {
         TimeTaken = ((f64)(EndTime.QuadPart-Win32Timer.LastFrame.QuadPart) /
                      (f64)(Win32Timer.ClockFrequency.QuadPart));
     }
+    Win32Timer.LastFrame = EndTime;
     GlobalPlatform.Delta = TimeTaken;
     GlobalPlatform.TotalTime += GlobalPlatform.Delta;
 }

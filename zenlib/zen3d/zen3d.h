@@ -9,7 +9,7 @@ struct { \
 camera * ActiveCamera; \
 f32 RendererWidth; \
 f32 RendererHeight; \
-};
+}
 
 internal void Zen3DInit(memory_arena * Arena);
 internal void Zen3DBeginFrame();
