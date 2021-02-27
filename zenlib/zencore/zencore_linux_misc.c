@@ -85,7 +85,7 @@ LinuxHeapAlloc(u32 SizeInBytes) {
 }
 
 internal void
-LinuxHeapFree(void * Memory, u32 SizeInBytes) {
+LinuxHeapFree(void * Memory) {
     //b8 Success = munmap(Memory, SizeInBytes);
     //Assert((Success == 0) && "Freed memory successfully");
     free(Memory);

@@ -24,6 +24,8 @@ global platform GlobalPlatform;
 #endif
 #include "zencore_win32_fileio.c"
 #include "zencore_win32_timer.c"
+#include "zencore_win32_appcode.c"
+#include "zencore_win32_misc.c"
 
 //~
 
@@ -65,7 +67,7 @@ LRESULT CALLBACK Win32ProcessEvent(HWND Window, UINT Message, WPARAM wParam, LPA
         GetClientRect(Window, &ClientRect);
         i32 Width = ClientRect.right - ClientRect.left;
         i32 Height = ClientRect.bottom - ClientRect.top;
-        //Win32RendererResize();
+        Win32RendererResize(Width, Height);
         GlobalPlatform.ScreenWidth  = Width;
         GlobalPlatform.ScreenHeight = Height;
     }
@@ -108,6 +110,15 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CMDLine, 
         goto win32_quit;
     }
     
+    
+    win32_app_code Win32AppCode = {0};
+    b32 LoadAppCodeSuccess = Win32AppCodeLoad(&Win32AppCode);
+    if(!LoadAppCodeSuccess) {
+        LogError("Fatal Error: Failed to load appcode");
+        goto win32_quit;
+    }
+    
+    
     // TODO(Abi): Get executable directory
     
     ShowWindow(Window, ShowCommand);
@@ -127,8 +138,8 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CMDLine, 
         // NOTE(Abi): Set function pointers
         //GlobalPlatform.Error = LinuxError;
         GlobalPlatform.LoadFile = Win32LoadFile;
-        //GlobalPlatform.HeapAlloc = LinuxHeapAlloc;
-        //GlobalPlatform.HeapFree = LinuxHeapFree;
+        GlobalPlatform.HeapAlloc = Win32HeapAlloc;
+        GlobalPlatform.HeapFree = Win32HeapFree;
         GlobalPlatform.GetTime = Win32TimerGetTime;
 #ifdef USE_OPENGL
         GlobalPlatform.OpenGLLoadProcedure = Win32OpenGLLoadFunction;
@@ -143,7 +154,11 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CMDLine, 
     HDC DeviceContext = GetDC(Window);
     Win32RendererInit(DeviceContext);
     
+    // TODO(abi): move to match linux platform layer
     Win32TimerInit();
+    
+    Win32AppCode.StaticLoad(&GlobalPlatform);
+    Win32AppCode.HotLoad(&GlobalPlatform);
     
     while(!GlobalPlatform.AppShouldQuit) {
         ZenPlatformBeginFrame();
@@ -162,7 +177,7 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CMDLine, 
         SwapBuffers(DeviceContext);
         
         MemoryArenaClear(&GlobalPlatform.ScratchArena);
-        //Win32AppCode.Update()
+        Win32AppCode.Update();
         
         Win32TimerEndFrame();
     }

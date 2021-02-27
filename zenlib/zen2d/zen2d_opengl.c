@@ -64,7 +64,7 @@ Zen2DLoadFont(void * PNGData, i32 Width, i32 Height, i32 Channels, font_glyph * 
 
 internal void
 Zen2DUnloadFont(font * Font) {
-    Platform->HeapFree(Font->Glyphs, Font->GlyphCount * sizeof(font_glyph));
+    Platform->HeapFree(Font->Glyphs);
     ZenUnloadTexture(&Font->Texture);
     MemorySet(Font, 0, sizeof(font));
 }

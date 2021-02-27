@@ -51,7 +51,7 @@ struct platform {
     void   (*Error)(const char * Title, const char * Message);
     char * (*LoadFile)(const char * Path, b32 Temporary);
     void * (*HeapAlloc)(u32 Size);
-    void   (*HeapFree)(void * Memory, u32 Size);
+    void   (*HeapFree)(void * Memory);
     f64    (*GetTime)(void);
 #ifdef USE_OPENGL
     void * (*OpenGLLoadProcedure)(const char * Name);

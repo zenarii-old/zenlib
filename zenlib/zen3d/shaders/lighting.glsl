@@ -65,8 +65,8 @@ void main() {
 
 	vec4 Result = (Ambient + Diffuse + Specular) * fColour;
 	Result.a = 1.0;
-	FragColour  = Result * texture(Texture, fUVs);
-
+	FragColour = Result * texture(Texture, fUVs);
+	FragColour = v4(1.f, 1.f, 1.f, 1.f);
     //if(gl_FragCoord.x < 400) FragColour = SunColour;
 	
 }
