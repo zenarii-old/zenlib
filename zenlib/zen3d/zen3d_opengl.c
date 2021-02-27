@@ -408,10 +408,8 @@ Zen3D->name.Memory = MemoryArenaAlloc(Arena, Zen3D->name.Size * Zen3D->name.Max)
     
     Zen3D->Framebuffer = OpenGLCreateFramebuffer(Platform->ScreenWidth, Platform->ScreenHeight);
     
-    //unsigned char * White = (unsigned char *)"\255\255\255\255\255\255\255\255";
-    //Zen3D->White = ZenLoadTexture(White, 1, 1, 4, ZEN_TEXTURE_NEAREST);
-    Zen3D->White = ZenLoadTextureFromPNG("white.png", ZEN_TEXTURE_NEAREST);
-    fprintf(stderr, "[Zen3D] Loaded\n");
+    unsigned char White = 255;
+    Zen3D->White = ZenLoadTexture(&White, 1, 1, 4, ZEN_TEXTURE_NEAREST);
     
     // TODO(abi): probably set a default sun so that the lighting isn't fucked?
 }
