@@ -65,7 +65,7 @@ OpenGLCreateFramebuffer(GLint Width, GLint Height) {
     Framebuffer.Depth = Depth;
     Framebuffer.Width = Width;
     Framebuffer.Height = Height;
-    
+    Log("Created framebuffer, %d %d", Width, Height);
     return Framebuffer;
 }
 

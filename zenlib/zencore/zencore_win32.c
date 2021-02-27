@@ -67,9 +67,11 @@ LRESULT CALLBACK Win32ProcessEvent(HWND Window, UINT Message, WPARAM wParam, LPA
         GetClientRect(Window, &ClientRect);
         i32 Width = ClientRect.right - ClientRect.left;
         i32 Height = ClientRect.bottom - ClientRect.top;
+        
         Win32RendererResize(Width, Height);
         GlobalPlatform.ScreenWidth  = Width;
         GlobalPlatform.ScreenHeight = Height;
+        Log("resize, %d, %d", Width, Height);
     }
     else {
         Result = DefWindowProc(Window, Message, wParam, lParam);
@@ -144,8 +146,6 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CMDLine, 
 #ifdef USE_OPENGL
         GlobalPlatform.OpenGLLoadProcedure = Win32OpenGLLoadFunction;
 #endif
-        GlobalPlatform.ScreenWidth  = WINDOW_SIZEX;
-        GlobalPlatform.ScreenHeight = WINDOW_SIZEY;
         
         Platform = &GlobalPlatform;
     }
