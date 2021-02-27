@@ -209,6 +209,7 @@ TransposeMatrix(matrix4x4 mat) {
     return mT;
 }
 
+
 internal inline f32
 MatrixDeterminant(matrix4x4 m) {
     f32 det = 0.f;

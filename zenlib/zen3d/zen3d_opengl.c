@@ -563,14 +563,19 @@ Zen3DEndFrame() {
     }
     
 #ifndef ZEN2D
-    OpenGLBindFramebuffer(0);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    glUseProgram(Zen2D->Shaders[ZEN2D_SHADER_FBO_BLIT]);
-    glBindTexture(GL_TEXTURE_2D, Zen3D->Framebuffer.Texture);
-    glBindVertexArray(Zen2D->FramebufferBlit.VAO);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-    glBindVertexArray(0);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, Zen3D->Framebuffer.ID);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    
+    glBlitFramebuffer(0,
+                      0,
+                      Platform->ScreenWidth,
+                      Platform->ScreenHeight,
+                      0,
+                      0,
+                      Platform->ScreenWidth,
+                      Platform->ScreenHeight,
+                      GL_COLOR_BUFFER_BIT,
+                      GL_NEAREST);
 #else
     glBindFramebuffer(GL_READ_FRAMEBUFFER, Zen3D->Framebuffer.ID);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, Zen2D->Framebuffer[ZEN2D_FBO_MAIN].ID);

@@ -73,6 +73,22 @@ LRESULT CALLBACK Win32ProcessEvent(HWND Window, UINT Message, WPARAM wParam, LPA
         GlobalPlatform.ScreenHeight = Height;
         Log("resize, %d, %d", Width, Height);
     }
+    else if (Message == WM_LBUTTONDOWN || Message == WM_LBUTTONUP) {
+        b32 IsDown = (Message == WM_LBUTTONDOWN);
+        GlobalPlatform.MouseDown[0] = IsDown;
+    }
+    else if (Message == WM_RBUTTONDOWN || Message == WM_RBUTTONUP) {
+        b32 IsDown = (Message == WM_RBUTTONDOWN);
+        GlobalPlatform.MouseDown[2] = IsDown;
+    }
+    else if(Message == WM_MOUSEWHEEL) {
+        i32 MouseDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+        //Note(Zen): Get Mouse Scroll between 0 and 1
+        GlobalPlatform.MouseScroll = MouseDelta / 120.f;
+    }
+    else if(Message == WM_SIZING) {
+        
+    }
     else {
         Result = DefWindowProc(Window, Message, wParam, lParam);
     }
@@ -146,6 +162,7 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CMDLine, 
 #ifdef USE_OPENGL
         GlobalPlatform.OpenGLLoadProcedure = Win32OpenGLLoadFunction;
 #endif
+        
         
         Platform = &GlobalPlatform;
     }
