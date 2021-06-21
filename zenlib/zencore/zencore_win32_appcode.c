@@ -12,7 +12,7 @@ internal b8
 Win32AppCodeLoad(win32_app_code * AppCode) {
     b8 Success = 0;
     
-    char * HandlePath = "./sandbox.dll";
+    char * HandlePath = "./" DLL_NAME ".dll";
     HMODULE Handle = LoadLibraryA(HandlePath);
     if(!Handle) {
         LogError("Failed to load dll at %s", HandlePath);
