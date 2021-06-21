@@ -151,7 +151,8 @@ ZenLoadTexture(unsigned char * Data, i32 Width, i32 Height, i32 Channels, u32 Fl
         case 1: {
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, Width, Height, 0, GL_RED, GL_UNSIGNED_BYTE, Data);
         } break;
-        default: Assert(0 && "Invalid number of channels");
+        
+        default: Assert(!"Invalid number of channels");
     }
     glGenerateMipmap(GL_TEXTURE_2D);
     
@@ -164,7 +165,16 @@ ZenLoadTextureFromPNG(const char * Path, u32 Flags) {
     i32 Width, Height, Channels;
     unsigned char * Data = stbi_load(Path, &Width, &Height, &Channels, 0);
     
-    texture T = ZenLoadTexture(Data, Width, Height, Channels, Flags);
+    texture T;
+    if(Data) {
+        T = ZenLoadTexture(Data, Width, Height, Channels, Flags);
+    }
+    else {
+        LogWarning("Failed to load file %s", Path);
+        
+        unsigned char BackupData = 255;
+        T = ZenLoadTexture(&BackupData, 1, 1, 4, ZEN_TEXTURE_NEAREST);
+    }
     
     stbi_image_free(Data);
     return T;
