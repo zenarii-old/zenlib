@@ -65,7 +65,7 @@ OpenGLCreateFramebuffer(GLint Width, GLint Height) {
     Framebuffer.Depth = Depth;
     Framebuffer.Width = Width;
     Framebuffer.Height = Height;
-    Log("Created framebuffer, %d %d", Width, Height);
+    
     return Framebuffer;
 }
 
@@ -171,7 +171,7 @@ ZenLoadTextureFromPNG(const char * Path, u32 Flags) {
     }
     else {
         LogWarning("Failed to load file %s", Path);
-        
+        // TODO(abiab): this doesn't actually create a texture
         unsigned char BackupData = 255;
         T = ZenLoadTexture(&BackupData, 1, 1, 4, ZEN_TEXTURE_NEAREST);
     }

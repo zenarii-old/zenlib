@@ -20,6 +20,21 @@ VecOp(Add, +)
 VecOp(Divide, /)
 VecOp(Multiply, *)
 
+internal inline v2
+NormaliseV2(v2 v) {
+    f32 Squared = v.x * v.x + v.y * v.y;
+    if(Squared > 1.f + EPSILON || Squared < 1.f - EPSILON) {
+        f32 Length = sqrtf(Squared);
+        v = v2(v.x/Length, v.y/Length);
+    }
+    return v;
+}
+
+internal inline f32
+LengthSquaredV2(v2 v) {
+    return v.x * v.x + v.y * v.y;
+}
+
 internal inline v3
 NormaliseV3(v3 v) {
     f32 Squared = v.x * v.x + v.y * v.y + v.z * v.z;

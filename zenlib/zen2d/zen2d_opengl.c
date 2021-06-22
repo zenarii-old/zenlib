@@ -331,10 +331,8 @@ Zen2DPushLine(v2 Start, v2 End, v4 Colour) {
     Zen2DPushLineVertices(Start, End, Colour, Colour);
 }
 
-
-// TODO(Abi): Tint method for textures.
 internal void
-Zen2DPushTextureRect(v4 Destination, texture Texture, v4 Source){
+Zen2DPushTextureRectTint(v4 Destination, texture Texture, v4 Source, v4 Colour) {
     Assert(Texture.ID);
     
     if(!Zen2D->ActiveBatch || Zen2D->ActiveBatch->Type != ZEN2D_BATCH_TEXTURES || Zen2D->ActiveBatch->TexData.ID != Texture.ID) {
@@ -355,7 +353,7 @@ Zen2DPushTextureRect(v4 Destination, texture Texture, v4 Source){
         Source.x /= Texture.Width;  Source.Width  /= Texture.Width;
         Source.y /= Texture.Height; Source.Height /= Texture.Height;
     }
-    v4 Colour = v4(1.f, 1.f, 1.f, 1.f);
+    
     GLubyte * Data = Zen2D->Texture.Memory + Zen2D->Texture.AllocPos;
     {
         ((v2 *)Data)[0]  = v2(Destination.x, 
@@ -396,6 +394,12 @@ Zen2DPushTextureRect(v4 Destination, texture Texture, v4 Source){
     }
     Zen2D->Texture.AllocPos += Zen2D->Texture.Size;
     Zen2D->ActiveBatch->DataLength += Zen2D->Texture.Size;
+}
+
+internal void
+Zen2DPushTextureRect(v4 Destination, texture Texture, v4 Source) {
+    v4 Colour = v4(1.f, 1.f, 1.f, 1.f);
+    Zen2DPushTextureRectTint(Destination, Texture, Source, Colour);
 }
 
 
