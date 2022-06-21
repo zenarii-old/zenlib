@@ -60,6 +60,7 @@ struct platform {
     // NOTE(Abi): Module Pointers
     void * Zen2D;
     void * Zen3D;
+    void * FreeType;
 };
 
 global platform * Platform;

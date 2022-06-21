@@ -12,6 +12,10 @@
 
 // NOTE(Abi): CRT
 
+// NOTE(abiab): Freetype
+#include "ft2build.h"
+#include FT_FREETYPE_H
+
 // NOTE(Abi): Zenlib Headers
 #include "zencore.h"
 
@@ -165,6 +169,13 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CMDLine, 
         
         
         Platform = &GlobalPlatform;
+    }
+    
+    // NOTE(abiab): load freetype library
+    FT_Library FreeType;
+    if (FT_Init_FreeType(&FreeType)) {
+        LogError("Fatal Error: Failed to initialise FreeType Library");
+        goto win32_quit;
     }
     
     // NOTE(abi): Graphics Initialisation
