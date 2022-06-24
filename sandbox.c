@@ -4,6 +4,14 @@
 // NOTE(Abi): Implementations
 #include "zenlib/zenlib.c"
 
+/*
+TODO:
+ * Play sounds
+* Load models + materials
+* Sort out lighting, shadows, etc
+* Finalise hot reloading, no clue why its not present rn
+*/
+
 struct core {
     font Font;
     texture Texture;
@@ -17,21 +25,29 @@ AppInit() {
     
     Platform->Core->Texture = ZenLoadTextureFromPNG("star.png", ZEN_TEXTURE_NEAREST);
     
-    Platform->Core->Font = Zen2DLoadFont("inconsolata.ttf", 32);
+    Platform->Core->Font = Zen2DLoadFont("inconsolata.ttf", 64);
 }
 
 internal void
 AppUpdate() {
-#if 0
+    // TEMP(Abi): 3D
+    
     local camera Camera = {0};
-    Camera.Mode = CAMERA_MODE_LOOK_AT;
+    Camera.Position = v3(sin(Platform->TotalTime), 0, cos(Platform->TotalTime))     ;
+    Camera.Target   = v3(0, 0, 1);
+    Camera.Mode = CAMERA_MODE_FORWARD;
     Camera.fov = 0.5 * PI;
+    Zen3DSetActiveCamera(&Camera);
+    
+    Zen3DPushQuad(v3(1, -1, 2), v3(-1, -1, 2), v3(-1, 1, 2), v3(1, 1, 2), v4(1, 0, 1, 1));
     
     // TODO(abi): figure out why these initialisers are no longer constant
     local sun Sun = {0};
     Sun.Direction = v3(1.f, 1.f, 0.f);
     Sun.Colour = v4(1.f, 1.f, 1.f, 1.f);
-#endif
+    Zen3DSetActiveSun(&Sun);
+    
+    // TEMP(Abi): 2D
     
     v2 Centre = v2(Platform->ScreenWidth * 0.5, Platform->ScreenHeight * 0.5);
     f32 Radius = 100;
@@ -39,8 +55,7 @@ AppUpdate() {
                 Centre.y + Radius * cos(2 * Platform->TotalTime) - 50);
     
     Zen2DPushTexture(Platform->Core->Texture, Pos);
-    //Zen2DPushTexture(Platform->Core->Font.Texture, v2(200, 100));
-    char * Str = "Love u <3";
+    char * Str = "Zenlib test :)";
     Zen2DPushTextFontColourN(Str, StringLength(Str), &Platform->Core->Font, v2(100, 100), v4(1, 1, 1, 1));
 }
 

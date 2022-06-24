@@ -503,29 +503,27 @@ Zen2DPushTextFontColourN(const char * String, u32 StringLength, font * Font, v2 
 }
 
 
-#if 0
+
 internal v2
-Zen2DPushTextFontN(const char * Text, u32 Length, font * Font, v2 Position, f32 Size) {
+Zen2DPushTextFontN(const char * Text, u32 Length, font * Font, v2 Position) {
     v4 Colour = v4(1.f, 1.f, 1.f, 1.f);
-    return Zen2DPushTextFontColourN(Text, Length, Font, Position, Size, Colour);
+    return Zen2DPushTextFontColourN(Text, Length, Font, Position, Colour);
 }
 
 internal v2
-Zen2DPushTextN(const char * Text, u32 Length, v2 Position, f32 Size) {
-    return Zen2DPushTextFontN(Text, Length, Zen2D->DefaultFont, Position, Size);
+Zen2DPushTextN(const char * Text, u32 Length, v2 Position) {
+    return Zen2DPushTextFontN(Text, Length, Zen2D->DefaultFont, Position);
 }
 
 internal v2
-Zen2DPushText(const char * Text, v2 Position, f32 Size) {
-    return Zen2DPushTextFontN(Text, StringLength(Text), Zen2D->DefaultFont, Position, Size);
+Zen2DPushText(const char * Text, v2 Position) {
+    return Zen2DPushTextFontN(Text, StringLength(Text), Zen2D->DefaultFont, Position);
 }
 
+//
+// ~
+//
 
-internal void
-Zen2DPushTextInBox(char * String, f32 Size, v4 Box) {
-    
-}
-#endif
 internal void
 Zen2DBeginFrame() {
     

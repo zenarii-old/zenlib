@@ -106,6 +106,8 @@ struct static_mesh {
 typedef enum camera_mode camera_mode;
 enum camera_mode {
     CAMERA_MODE_LOOK_AT,
+    CAMERA_MODE_FORWARD,
+    
     CAMERA_MODE_COUNT
 };
 
