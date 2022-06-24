@@ -22,14 +22,10 @@ in vec4 fColour;
 in vec2 fTexCoords;
 
 out vec4 FragColour;
-//the smaller the text the higher the edge value desired
-//TODO(Abi) Once i have a UI edit these values
+
 const float Width = 0.32;
 const float Edge = 0.34;
 
 void main() {
-	float Distance = 1.0 - texture(Texture, fTexCoords).a;
-	float Alpha = 1.0 - smoothstep(Width, Width + Edge, Distance);
-
-	FragColour = vec4(fColour.r, fColour.g, fColour.b, fColour.a * Alpha);
+	FragColour = vec4(fColour.r, fColour.g, fColour.b, texture(Texture, fTexCoords).r);
 }

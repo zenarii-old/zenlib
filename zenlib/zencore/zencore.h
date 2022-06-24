@@ -95,6 +95,7 @@ struct v3i { i32 x, y, z; };
 // NOTE(Abi): Zencore headers
 #include "zencore_debug.h"
 #include "zencore_memory.h"
+#include "zencore_font.h"
 #include "zencore_platform.h"
 
 #include "zencore_debug.c"

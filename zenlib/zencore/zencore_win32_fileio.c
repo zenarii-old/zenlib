@@ -1,5 +1,5 @@
 internal char *
-Win32LoadFile(const char * Path, b32 Temporary) {
+Win32LoadFile(const char * Path, b32 Temporary, i32 * BufferLength) {
     // TODO(abi): check if need to change security attribs
     HANDLE FileHandle = CreateFile(Path, GENERIC_READ, FILE_SHARE_READ, NULL,
                                    OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -13,6 +13,7 @@ Win32LoadFile(const char * Path, b32 Temporary) {
         DWORD BytesRead = 0;
         ReadFile(FileHandle, Buffer, FileSize, &BytesRead, 0);
         Buffer[BytesRead-1] = '\0';
+        if(BufferLength) *BufferLength = BytesRead;
     }
     else {
         DWORD Error = GetLastError();

@@ -48,16 +48,13 @@ Zen2DOpenGLLoadShader(const char * Name, const char * VertexSource, const char *
 
 
 internal font
-Zen2DLoadFont(void * PNGData, i32 Width, i32 Height, i32 Channels, font_glyph * Glyphs, u32 GlyphCount, u32 LineHeight, u32 FontSize, u32 Base, u32 LowestChar) {
+Zen2DLoadFont(char * Path, i32 FontHeight) {
     font Font = {0};
-    Font.Texture = ZenLoadTexture(PNGData, Width, Height, Channels, ZEN_TEXTURE_LINEAR);
-    Font.Glyphs = Platform->HeapAlloc(sizeof(font_glyph) * GlyphCount);
-    MemoryCopy(Font.Glyphs, Glyphs, GlyphCount * sizeof(font_glyph));
-    Font.GlyphCount = GlyphCount;
-    Font.LowestChar = LowestChar;
-    Font.LineHeight = LineHeight;
-    Font.Base = Base;
-    Font.Size = FontSize;
+    u8 * FontBitmap = Platform->LoadFontData(Path, FontHeight, &Font.Glyphs);
+    Font.Texture = ZenLoadTexture(FontBitmap, 10 * FontHeight, 10 * FontHeight, 1, ZEN_TEXTURE_LINEAR);
+    Font.LineHeight = FontHeight; // TODO(Abi): Get actual value
+    Font.Base = 0;
+    Font.Size = FontHeight;
     
     return Font;
 }
@@ -408,11 +405,11 @@ Zen2DPushTexture(texture Texture, v2 Position) {
     Zen2DPushTextureRect(v4(Position.x, Position.y, Texture.Width, Texture.Height), Texture, v4(0, 0, Texture.Width, Texture.Height));
 }
 
+
 internal v2
-Zen2DPushTextFontColourN(const char * String, u32 StringLength, font * Font, v2 StartPosition, f32 FontSize, v4 Colour) {
+Zen2DPushTextFontColourN(const char * String, u32 StringLength, font * Font, v2 StartPosition, v4 Colour) {
     Assert(Zen2DIsFontValid(Font));
     
-    f32 FontScale = FontSize / (f32)Font->Size;
     if(!Zen2D->ActiveBatch || Zen2D->ActiveBatch->Type != ZEN2D_BATCH_TEXT ||
        Zen2D->ActiveBatch->FontData.p->Texture.ID != Font->Texture.ID) {
         Zen2D->ActiveBatch = &Zen2D->Batches[Zen2D->BatchesCount++];
@@ -426,23 +423,24 @@ Zen2DPushTextFontColourN(const char * String, u32 StringLength, font * Font, v2 
     v2 Cursor = StartPosition;
     
     for(int i = 0; i < StringLength; ++i) {
+        /* TODO
         if(String[i] == '\n') {
             // HACK(Abi): 0.5 * Font Base is just a made up value
             Cursor.y -= Font->LineHeight * FontScale - 0.5 * Font->Base * FontScale; 
             Cursor.x = StartPosition.x;
             continue;
         }
+        */
+        character Glyph = Font->Glyphs[String[i] - ' '];
         
-        font_glyph Glyph = Font->Glyphs[String[i] - Font->LowestChar];
+        // TODO(Abi): Better verify this
+        v4 Destination = v4(Cursor.x + (Glyph.XOffset),
+                            Cursor.y + Glyph.YOffset,
+                            Glyph.Width,
+                            -Glyph.Height);
         
-        v4 Destination = v4(Cursor.x + (Glyph.XOffset * FontScale),
-                            Cursor.y + (Font->Base + 1) * FontScale -  ((Glyph.YOffset + Glyph.Height) * FontScale),
-                            Glyph.Width * FontScale,
-                            Glyph.Height * FontScale);
-        
-        // HARDCODE(Abi): 
         v4 Source = v4(Glyph.x,
-                       Glyph.y + Glyph.Height,
+                       Glyph.y,
                        Glyph.Width,
                        Glyph.Height);
         
@@ -455,7 +453,6 @@ Zen2DPushTextFontColourN(const char * String, u32 StringLength, font * Font, v2 
             
             Source.x /= Font->Texture.Width;  Source.Width  /= Font->Texture.Width;
             Source.y /= Font->Texture.Height; Source.Height /= Font->Texture.Height;
-            Source.y = 1.0 - Source.y;
         }
         
         GLubyte * Data = Zen2D->Text.Memory + Zen2D->Text.AllocPos;
@@ -499,12 +496,14 @@ Zen2DPushTextFontColourN(const char * String, u32 StringLength, font * Font, v2 
         
         Zen2D->Text.AllocPos += Zen2D->Text.Size;
         Zen2D->ActiveBatch->DataLength += Zen2D->Texture.Size;
-        Cursor.x += Glyph.XAdvance * FontScale;
+        Cursor.x += Glyph.XAdvance;
     }
     
     return Cursor;
 }
 
+
+#if 0
 internal v2
 Zen2DPushTextFontN(const char * Text, u32 Length, font * Font, v2 Position, f32 Size) {
     v4 Colour = v4(1.f, 1.f, 1.f, 1.f);
@@ -526,7 +525,7 @@ internal void
 Zen2DPushTextInBox(char * String, f32 Size, v4 Box) {
     
 }
-
+#endif
 internal void
 Zen2DBeginFrame() {
     

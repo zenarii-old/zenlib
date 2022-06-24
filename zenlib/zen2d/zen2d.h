@@ -50,8 +50,8 @@ internal void Zen2DPushBlur(v4 Rect);
 // Loading
 //
 
-internal font Zen2DLoadFontFromFNTAndPNG(const char * FNTPath, const char * PNGPath);
-internal font Zen2DLoadFont(void * PNGData, i32 Width, i32 Height, i32 Channels, font_glyph * Glyphs, u32 GlyphCount, u32 LineHeight, u32 FontSize, u32 Base, u32 LowestChar);
+
+internal font Zen2DLoadFont(char * Path, i32 FontHeight);
 
 internal void Zen2DInitCommon(void);
 internal void Zen2DInit(memory_arena * Arena);

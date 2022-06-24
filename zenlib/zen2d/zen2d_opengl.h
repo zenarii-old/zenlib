@@ -33,9 +33,7 @@ struct zen2d_batch {
 
 struct font {
     texture Texture;
-    font_glyph * Glyphs;
-    u32 GlyphCount;
-    u32 LowestChar;
+    character * Glyphs;
     u32 LineHeight;
     u32 Base;
     u32 Size;

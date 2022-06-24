@@ -49,18 +49,18 @@ struct platform {
     
     // NOTE(Abi): Function pointers
     void   (*Error)(const char * Title, const char * Message);
-    char * (*LoadFile)(const char * Path, b32 Temporary);
+    char * (*LoadFile)(const char * Path, b32 Temporary, i32 * BufferLength);
     void * (*HeapAlloc)(u32 Size);
     void   (*HeapFree)(void * Memory);
     f64    (*GetTime)(void);
 #ifdef USE_OPENGL
     void * (*OpenGLLoadProcedure)(const char * Name);
 #endif
+    void * (*LoadFontData)(const char * Path, i32 FontHeight, void ** Glyphs);
     
     // NOTE(Abi): Module Pointers
     void * Zen2D;
     void * Zen3D;
-    void * FreeType;
 };
 
 global platform * Platform;

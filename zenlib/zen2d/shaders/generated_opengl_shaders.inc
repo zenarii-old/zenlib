@@ -100,16 +100,12 @@ zen2d_shader_info ShaderInfo[] = {
 		"in vec2 fTexCoords;\n" \
 		"\n" \
 		"out vec4 FragColour;\n" \
-		"//the smaller the text the higher the edge value desired\n" \
-		"//TODO(Abi) Once i have a UI edit these values\n" \
+		"\n" \
 		"const float Width = 0.32;\n" \
 		"const float Edge = 0.34;\n" \
 		"\n" \
 		"void main() {\n" \
-		"	float Distance = 1.0 - texture(Texture, fTexCoords).a;\n" \
-		"	float Alpha = 1.0 - smoothstep(Width, Width + Edge, Distance);\n" \
-		"\n" \
-		"	FragColour = vec4(fColour.r, fColour.g, fColour.b, fColour.a * Alpha);\n" \
+		"	FragColour = vec4(fColour.r, fColour.g, fColour.b, texture(Texture, fTexCoords).r);\n" \
 		"}\n"
 	},
 	{

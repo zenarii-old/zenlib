@@ -61,8 +61,8 @@ Zen3DOpenGLLoadShader(const char * Name, const char * VertexSource, const char *
 
 internal shader
 Zen3DLoadCustomShader(char * Name, char * VertexPath, char * FragmentPath) {
-    char * VertexSource = Platform->LoadFile(VertexPath, 1);
-    char * FragmentSource = Platform->LoadFile(FragmentPath, 1);
+    char * VertexSource = Platform->LoadFile(VertexPath, 1, NULL);
+    char * FragmentSource = Platform->LoadFile(FragmentPath, 1, NULL);
     shader Shader = Zen3DOpenGLLoadShader(Name, VertexSource, FragmentSource);
     
     glUseProgram(Shader);
