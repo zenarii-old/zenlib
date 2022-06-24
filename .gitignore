@@ -1,2 +1,4 @@
 .vs/
+build/vc140.pdb
+build/vc140.pdb
 *.pdb
