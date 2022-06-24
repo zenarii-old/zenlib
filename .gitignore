@@ -2,3 +2,8 @@
 build/vc140.pdb
 build/vc140.pdb
 *.pdb
+build/sandbox.dll
+build/zenlib.exe
+*.pdb
+*.pdb
+*.dll

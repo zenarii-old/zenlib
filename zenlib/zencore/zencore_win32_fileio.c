@@ -1,3 +1,18 @@
+internal FILETIME
+Win32GetLastWriteTime(char * Path) {
+    FILETIME LastWriteTime = {0};
+    
+    WIN32_FIND_DATA FindData;
+    HANDLE FileHandle = FindFirstFileA(Path, &FindData);
+    
+    if(FileHandle != INVALID_HANDLE_VALUE) {
+        LastWriteTime = FindData.ftLastWriteTime;
+        FindClose(FileHandle);
+    }
+    
+    return LastWriteTime;
+}
+
 internal char *
 Win32LoadFile(const char * Path, b32 Temporary, i32 * BufferLength) {
     // TODO(abi): check if need to change security attribs

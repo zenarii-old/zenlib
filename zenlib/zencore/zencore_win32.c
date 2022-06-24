@@ -200,7 +200,7 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance, LPSTR CMDLine, 
     
     while(!GlobalPlatform.AppShouldQuit) {
         ZenPlatformBeginFrame();
-        //Win32AppCodeBeginFrame();
+        Win32AppCodeBeginFrame(&Win32AppCode);
         
         // NOTE(abi): Process input
         MSG message;
