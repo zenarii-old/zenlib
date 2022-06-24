@@ -9,7 +9,6 @@ TODO:
  * Play sounds
 * Load models + materials
 * Sort out lighting, shadows, etc
-* Finalise hot reloading, no clue why its not present rn, works about half the time?
 * Resizing of screen
 */
 

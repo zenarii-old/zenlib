@@ -422,10 +422,6 @@ Zen3DBeginFrame() {
     Zen3D->RequestCount = 0;
     Zen3D->ActiveRequest = 0;
     
-    {
-        Zen3D->RendererWidth  = Platform->ScreenWidth;
-        Zen3D->RendererHeight = Platform->ScreenHeight;
-    }
     // TEMP(Abi);
     OpenGLBindFramebuffer(&Zen3D->Framebuffer);
     glClearColor(0.53, 0.81, 0.92, 1.f);
@@ -434,6 +430,17 @@ Zen3DBeginFrame() {
     OpenGLBindFramebuffer(0);
     glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
+    // TODO(abiab): wastes time on first run as will destroy the framebuffers immediately
+    
+    if(Zen3D->RendererWidth != Platform->ScreenWidth || Zen3D->RendererHeight != Platform->ScreenHeight) {
+        Zen3D->RendererWidth  = Platform->ScreenWidth;
+        Zen3D->RendererHeight = Platform->ScreenHeight;
+        
+        OpenGLDeleteFramebuffer(&Zen3D->Framebuffer);
+        Zen3D->Framebuffer = OpenGLCreateFramebuffer(Platform->ScreenWidth, Platform->ScreenHeight);
+        glViewport(0, 0, Platform->ScreenWidth, Platform->ScreenHeight);
+    }
 }
 
 internal void

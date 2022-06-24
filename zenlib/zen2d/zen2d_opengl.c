@@ -526,7 +526,6 @@ Zen2DPushText(const char * Text, v2 Position) {
 
 internal void
 Zen2DBeginFrame() {
-    
     {
         OpenGLBindFramebuffer(&Zen2D->Framebuffer[ZEN2D_FBO_MAIN]);
         glClearColor(0.f, 0.f, 0.f, 0.f);
@@ -542,10 +541,17 @@ Zen2DBeginFrame() {
     Zen2D->BatchesCount = 0;
     Zen2D->ActiveBatch = 0;
     
-    // NOTE(Abi): Transfer Data from platform
-    {
+    // NOTE(Abi): Transfer Data from platform if resized
+    if(Zen2D->RendererWidth != Platform->ScreenWidth || Zen2D->RendererHeight != Platform->ScreenHeight) {
         Zen2D->RendererWidth  = Platform->ScreenWidth;
         Zen2D->RendererHeight = Platform->ScreenHeight;
+        
+        // TODO(abiab): wastes time on first run as will destroy the framebuffers immediately
+        for(i32 i = 0; i < ZEN2D_FBO_COUNT; ++i) {
+            OpenGLDeleteFramebuffer(&Zen2D->Framebuffer[i]);
+            Zen2D->Framebuffer[i] = OpenGLCreateFramebuffer(Platform->ScreenWidth, Platform->ScreenHeight);
+            glViewport(0, 0, Platform->ScreenWidth, Platform->ScreenHeight);
+        }
     }
 }
 

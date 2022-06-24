@@ -41,6 +41,7 @@ struct platform {
     char PutCharacters[MAX_PUT_CHARACTERS];
     u32 PutCharactersCount;
     
+    b8 Resized;
     f32 ScreenWidth;
     f32 ScreenHeight;
     
@@ -76,7 +77,7 @@ ZenPlatformBeginFrame(void) {
 
 internal void
 ZenPlatformEndFrame(void) {
-    
+    Platform->Resized = 0;
 }
 
 internal b32

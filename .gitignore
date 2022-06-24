@@ -7,3 +7,4 @@ build/zenlib.exe
 *.pdb
 *.pdb
 *.dll
+build/vc140.pdb
